@@ -12,8 +12,17 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
+    g.department_list = []  # TODO: get department list from DB
     if request.method == 'POST':
-        pass
+        username = request.form['username']
+        name = request.form['name']
+        gender = request.form['gender']
+        age = request.form['age']
+        department_id = request.form['department']
+        email = request.form['email']
+        id_number = request.form['id_number']
+        password = request.form['password']
+        # TODO: add to DB
     return render_template('auth/register.html.j2')
 
 
@@ -41,7 +50,7 @@ def login():
 
         # flash(error)
 
-    return render_template('auth/login.html')
+    return render_template('auth/login.html.j2')
 
 
 @bp.before_app_request

@@ -11,8 +11,21 @@
 {% block content %}
 <table border="1">
     <tr>
-        <th><div id="employee_display" employee_id="{{ g.user_id }}"></div></th>
-        <th>
+        <td>
+        {% if g.user_type == 'admin' or g.user_type == 'manager' %}
+            <div id="employee_selection">
+            {% for user in g.reachable_users %}
+            {% if user.id == g.user_id %}
+            <option value="{{ user.id }}" selected="selected"> {{user.name}} </option>
+            {% else %}
+            <option value="{{ user.id }}"> {{user.name}} </option>
+            {% endif %}
+            {% endfor %}
+            </div>
+        {% endif %}
+        <div id="employee_display" employee_id="{{ g.user_id }}"></div>
+        </td>
+        <td>
             <ul>
                 <li>
                 {% if g.work_status == 'out' %}
@@ -24,20 +37,20 @@
                 <li>
                 <a href="{{ url_for('main.leave')}}"> 请假 </a>
                 </li>
+                {% if g.user_type == 'manager' or g.user_type == 'admin' %}
+                <li>请假审核</li>
+                {% endif %}
+                {% if g.user_type == 'admin' %}
+                <li> 部门列表：<br /> <ul>
+                    {% for department in g.department_list %}
+                    <li><a href="{{ url_for('main.department', department_id=department.id) }}">deparment.name</a></li>
+                    {% endif %}
+                </ul> </li>
+                {% else %}
+                <li><a href="{{ url_for('main.department', department_id=g.department_id) }}">部门信息</a></li>
+                {% endif %}
             </ul>
-        </th>
-    </tr>
-    <tr>
-        {% if g.user_type == 'manager' %}
-        <th>部门信息</th>
-        {% endif %}
-        {% if g.user_type == 'manager' or g.user_type == 'admin' %}
-        <th>员工列表</th>
-        <th>请假审核</th>
-        {% endif %}
-        {% if g.user_type == 'admin' %}
-        <th>部门列表</th>
-        {% endif %}
+        </td>
     </tr>
 </table>
 {% endblock %}
