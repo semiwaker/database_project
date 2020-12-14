@@ -1,0 +1,25 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}主页{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<table>
+    <tr>
+        <th>信息</th>
+        <th>考勤</th>
+        <th>请假</th>
+        {% if g.user_type == 'manager' %}
+        <th>部门信息</th>
+        {% endif %}
+        {% if g.user_type == 'manager' or g.user_type == 'admin' %}
+        <th>员工列表</th>
+        <th>请假审核</th>
+        {% endif %}
+        {% if g.user_type == 'admin' %}
+        <th>部门列表</th>
+        {% endif %}
+    </tr>
+</table>
+{% endblock %}
