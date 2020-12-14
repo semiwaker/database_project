@@ -9,11 +9,13 @@ from checkin_system.db import get_db
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
+
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
     if request.method == 'POST':
         pass
-    return render_template('auth/register.html')
+    return render_template('auth/register.html.j2')
+
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
@@ -41,22 +43,25 @@ def login():
 
     return render_template('auth/login.html')
 
+
 @bp.before_app_request
 def load_logged_in_user():
     user_id = session.get('user_id')
 
-    if user_id is None:
-        g.user = None
-    else:
-        pass
-        # g.user = get_db().execute(
-            # 'SELECT * FROM user WHERE id = ?', (user_id,)
-        # ).fetchone()
+    g.user = user_id
+    # if user_id is None:
+    # else:
+    # pass
+    # g.user = get_db().execute(
+    # 'SELECT * FROM user WHERE id = ?', (user_id,)
+    # ).fetchone()
+
 
 @bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    return redirect(url_for('home'))
+
 
 def login_required(view):
     @functools.wraps(view)

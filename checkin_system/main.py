@@ -12,3 +12,23 @@ bp = Blueprint('main', __name__, url_prefix='/main')
 @login_required
 def home():
     return render_template('home.html.j2')
+
+@bp.route('/employee_info.xml', methods=('GET'))
+@login_required
+def employee_info(user_id):
+    pass
+
+@bp.route('/check_in')
+@login_required
+def check_in():
+    pass
+
+@bp.route('/check_out')
+@login_required
+def check_out():
+    pass
+
+@bp.route('/leave')
+@login_required
+def leave():
+    pass
