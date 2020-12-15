@@ -1,0 +1,22 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}请假{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<form method="post">
+<label> 请假开始时间 </label>
+<input type="date" id="leave_begin" required />
+<br />
+<label> 请假结束时间 </label>
+<input type="date" id="leave_end" required />
+<br />
+<label> 请假原因 </label>
+<textarea name="leave_reason" required />
+<br />
+<input type="submit" value="提交"/>
+</form>
+
+{% endblock %}

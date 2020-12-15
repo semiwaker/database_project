@@ -13,15 +13,7 @@
     <tr>
         <td>
         {% if g.user_type == 'admin' or g.user_type == 'manager' %}
-            <div id="employee_selection">
-            {% for user in g.reachable_users %}
-            {% if user.id == g.user_id %}
-            <option value="{{ user.id }}" selected="selected"> {{user.name}} </option>
-            {% else %}
-            <option value="{{ user.id }}"> {{user.name}} </option>
-            {% endif %}
-            {% endfor %}
-            </div>
+            <div id="employee_selection" user_id='{{ g.user_id }}' users='{{ g.reachable_users }}' ></div>
         {% endif %}
         <div id="employee_display" employee_id="{{ g.user_id }}"></div>
         </td>
@@ -38,7 +30,8 @@
                 <a href="{{ url_for('main.leave')}}"> 请假 </a>
                 </li>
                 {% if g.user_type == 'manager' or g.user_type == 'admin' %}
-                <li>请假审核</li>
+                <li><a href="{{ url_for('main.leave_review') }}">请假审核</a></li>
+                <li><a href="{{ url_for('main.salary_dispense') }}">工资发放</a></li>
                 {% endif %}
                 {% if g.user_type == 'admin' %}
                 <li> 部门列表：<br /> <ul>

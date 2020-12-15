@@ -1,3 +1,5 @@
+import datetime
+
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -13,22 +15,69 @@ bp = Blueprint('main', __name__, url_prefix='/main')
 def home():
     return render_template('home.html.j2')
 
-@bp.route('/employee_info.xml', methods=('GET'))
+
+@bp.route('/employee_info.xml', methods=['GET'])
 @login_required
 def employee_info(user_id):
     pass
+
 
 @bp.route('/check_in')
 @login_required
 def check_in():
     pass
 
+
 @bp.route('/check_out')
 @login_required
 def check_out():
     pass
 
-@bp.route('/leave')
+
+@bp.route('/leave', methods=['GET', 'POST'])
 @login_required
 def leave():
+    if request.method == 'POST':
+        leave_begin = request.form['leave_begin']
+        leave_end = request.form['leave_end']
+        leave_reason = request.form['leave_reason']
+        apply_day = datetime.date.today()
+        # TODO: add to DB
+    return render_template('leave.html.j2')
+
+
+@bp.route('/leave_review')
+@login_required
+def leave_review():
+    return render_template('leave_review.html.j2')
+
+
+@bp.route('/leave_review/accept', methods=['POST'])
+@login_required
+def accept_leave(leave_no):
+    pass
+
+
+@bp.route('/leave_review/reject', methods=['POST'])
+@login_required
+def reject_leave(leave_no):
+    pass
+
+
+@bp.route('/salary_dispense', methods=['GET', 'POST'])
+@login_required
+def salary_dispense():
+    if request.method == 'POST':
+        workTime = request.form["workTime"]
+        for salaryNo in g.salaryNos:
+            basicSalary = request.form["basic"+str(salaryNo)]
+            deduction = request.form["deduction"+str(salaryNo)]
+            realSalary = request.form["realSalary"+str(salaryNo)]
+            # TODO: add to DB
+    return render_template('salary_dispense.html.j2')
+
+
+@bp.route('/department', methods=['GET', 'POST'])
+@login_required
+def department(department_id):
     pass

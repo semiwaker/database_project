@@ -39,7 +39,7 @@ function BasicInfo(basic_info) {
     );
 }
 function Salaries(salaries) {
-    const tags = ["工资单编号", "部门编号", "基本工资", "缺勤早退扣除", "应发工资", "工作年限", "发放时间", "审核者ID", "审核者姓名"]
+    const tags = ["工资单编号", "部门编号", "基本工资", "缺勤早退扣除", "应发工资", "对于工作时间", "发放时间", "审核者ID", "审核者姓名"]
     const cont = salaries.childNode.map((x) => x.childeNode.map((y) => y.nodeValue));
     return (
         <Tabler tags={tags} values={cont}>
@@ -81,9 +81,9 @@ function EmployeeDisplay(employee_id, xml_doc) {
 }
 
 class EmployeeSelection extends React.Component {
-    constructor(options) {
+    constructor(props) {
         this.state = { value: '' };
-        this.options = options
+        this.props = props
 
         this.handleChange = this.handleChange.bind(this);
 
@@ -108,11 +108,19 @@ class EmployeeSelection extends React.Component {
 
 
     render() {
+        const cont = this.props.users.map(
+            (x) => {
+                if (this.props.user.id == x.user_id)
+                    <option value={x.user_id} selected="selected" >  {x.user_name} </option >
+                else
+                    <option value={x.user_id}> {x.user_name} </option>
+            }
+        );
         return (
             <form>
                 <label> 选择展示员工:
                     <selection value={this.state.value} onChange={this.handleChange}>
-                        {this.options}
+                        {cont}
                     </selection>
                 </label>
             </form>
@@ -135,4 +143,4 @@ xhttp.onreadystatechange = function () {
 xhttp.send();
 
 const selection = document.getElementById('employee_selection')
-ReactDom.render(<EmployeeSelection />, selection)
+ReactDom.render(<EmployeeSelection user_id={selection.user_id} users={selection.users} />, selection)
