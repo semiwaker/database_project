@@ -1,0 +1,38 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}部门信息{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+<label> 部门编号 {{ g.deparment_id }} </label>
+<label> 部门名称 </label>
+{% if g.user_type == "admin" %}
+<input type="text" name="department_name" value="g.department_name" requied />
+{% else %}
+<input type="text" name="department_name" value="g.department_name" disabled />
+{% endif %}
+<br />
+<label> 部门经理 </label>
+{% if g.user_type == "admin" %}
+<select name="manager" requied>
+{% else %}
+<select name="manager" disabled>
+{% endif %}
+{% for manager in g.manager_list %}
+    {% if g.department_manager_id == manager.id %}
+    <option value="{{ manager.id }}" selected> {{ manager.name }} </option>
+    {% else %}
+    <option value="{{ manager.id }}"> {{ manager.name }} </option>
+    {% endif %}
+{% endfor %}
+</select>
+<br />
+<textarea name="description" required>
+{{ g.department_description }}
+</textarea>
+
+<input type="submit" value="修改"/>
+</form>
+{% endblock %}
