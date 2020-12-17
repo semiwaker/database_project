@@ -17,9 +17,10 @@ def register():
         username = request.form['username']
         name = request.form['name']
         gender = request.form['gender']
-        age = request.form['age']
+        birthday = request.form['birthday']
         department_id = request.form['department']
         email = request.form['email']
+        phone = request.form['phone']
         id_number = request.form['id_number']
         password = request.form['password']
         # TODO: add to DB

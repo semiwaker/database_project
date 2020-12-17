@@ -76,6 +76,35 @@ def salary_dispense():
             # TODO: add to DB
     return render_template('salary_dispense.html.j2')
 
+@bp.route('/info_update', methods=['GET', 'POST'])
+@login_required
+def info_update():
+    if request.method == 'POST':
+        email = request.form["email"]
+        phone = request.form["phone"]
+        password = request.form["password"]
+        old_password = request.form["old_password"]
+        # TODO: check old_password and add to DB
+    return render_template('info_update.html.j2')
+
+@bp.route('/employee_modify', methods=['GET'])
+@login_required
+def employee_modify():
+    return render_template('employee_modify.html.j2')
+
+
+@bp.route('/employee_modify/update', methods=['POST'])
+@login_required
+def employee_modify_update(user_id):
+    if request.method == 'POST':
+        name = request.form['name']
+        gender = request.form['gender']
+        age = request.form['age']
+        department_id = request.form['department']
+        email = request.form['email']
+        id_number = request.form['id_number']
+        # TODO: add to DB
+
 
 @bp.route('/department', methods=['GET', 'POST'])
 @login_required

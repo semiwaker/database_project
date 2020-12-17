@@ -1,0 +1,26 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}修改自身信息{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+<label> 电子邮件 </label>
+<input type="email" name="email" value="g.email" requied />
+<br />
+<label> 电话号码 </label>
+<input type="text" name="phone" value="g.phone" requied />
+<br />
+
+<label> 新密码 </label>
+<input type="password" id="password" required />
+<br />
+
+<label> 旧密码 </label>
+<input type="password" id="old_password" required />
+<br />
+
+<input type="submit" value="注册"/>
+</form>
+{% endblock %}
