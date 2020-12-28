@@ -39,7 +39,7 @@ function BasicInfo(basic_info) {
     );
 }
 function Salaries(salaries) {
-    const tags = ["工资单编号", "部门编号", "基本工资", "缺勤早退扣除", "应发工资", "对于工作时间", "发放时间", "审核者ID", "审核者姓名"]
+    const tags = ["工资单编号", "部门编号", "基本工资", "缺勤早退扣除", "应发工资", "对应工作时间", "发放时间", "审核者ID", "审核者姓名"]
     const cont = salaries.childNode.map((x) => x.childeNode.map((y) => y.nodeValue));
     return (
         <Tabler tags={tags} values={cont}>

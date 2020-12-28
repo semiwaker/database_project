@@ -4,7 +4,7 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
 
-from checkin_system.db import get_db
+# from checkin_system.db import get_db
 from checkin_system.auth import login_required
 
 bp = Blueprint('main', __name__, url_prefix='/main')
@@ -118,3 +118,23 @@ def department(department_id):
         description = request.form["description"]
         # TODO: add to DB
     return render_template("department.html.j2")
+
+
+@bp.route('/add_department')
+@login_required
+def add_department():
+    # TODO: add new department to DB
+    department_id = None
+    return redirect(url_for("main.department", department_id=department_id))
+
+
+@bp.route('/remove_department')
+@login_required
+def remove_department(department_id):
+    # TODO: remove from DB
+    return redirect(url_for("main.success"))
+
+
+@bp.route('/success')
+def success():
+    return render_template("success.html.j2")

@@ -15,9 +15,39 @@ h1, h2, h3, h4, h5, h6 {
   color: #377ba8;
   margin: 1rem 0;
 }
+h1{
+  text-align: center;
+}
+h1#bigtitle{
+  color: #2c49cc;
+  background-color: #cae6f6;
+  font-size:40px;
+}
 
-a {
+a:link, a:visited {
+  display:block;
+  background-color: #cae6f6;
   color: #377ba8;
+  padding: 4px;
+  text-align: center;
+  text-decoration:none;
+}
+a:hover {
+  background-color: #20B2AA;
+}
+a:active{
+  background-color: #7cfc00;
+}
+
+input[type=submit]{
+  color: #377ba8;
+  background-color: #cae6f6;
+}
+input:hover[type=submit]{
+  background-color: #20B2AA;
+}
+input:active[type=submit]{
+  background-color: #db1568;
 }
 
 hr {
@@ -52,6 +82,14 @@ nav ul  {
 nav ul li a, nav ul li span, header .action {
   display: block;
   padding: 0.5rem;
+}
+
+nav ul li{
+  width: 310px;
+}
+
+ul.links li{
+  list-style-type: none;
 }
 
 .content {
@@ -133,3 +171,13 @@ input[type=submit] {
   min-width: 10em;
 }
 
+.message div{
+  background-color: #e0ffff;
+  text-align: center;
+  padding: 5px;
+  margin: 10px;
+}
+
+div#operation_div{
+  float: right;
+}
