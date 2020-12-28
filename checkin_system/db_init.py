@@ -47,15 +47,16 @@ cursor.execute(sql)
 
 sql = """create table PAYROLL (
         SalaryNo int, 
+        EmployeeID int,
         BasicSalary int not null,
-        CorrespondingTime_start date not null,
-        CorrespondingTime_end date not null,
+        CorrespondingTime date not null,
         PayTime timestamp(0) not null ,
         VerifierID int,
         WorkTime int,
         Deduction int not null default 0,
         RealSalary int not null,
         primary key (SalaryNo),
+        foreign key(EmployeeID) references test.EMPLOYEE(EmployeeID),
         foreign key(VerifierID) references test.EMPLOYEE(EmployeeID)) """
 cursor.execute(sql)
 
@@ -65,6 +66,7 @@ sql = """create table LEAVES (
         LeaveBegin date not null,
         LeaveEnd date not null,
         LeaveReason char(30),
+        Privateornot bool not null,
         ApplyDay date not null,
         ReviewerID int,
         ApplyStatus bool not null default 0,
@@ -82,6 +84,7 @@ sql = """create table ATTENDENCES (
         LeaveTime time not null ,
         Lateornot bool,
         LeaveEarlyornot bool,
+        TimeMissing int not null,
         primary key (AttendenceNo)
         )"""
 cursor.execute(sql)
