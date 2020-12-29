@@ -111,9 +111,9 @@ class EmployeeSelection extends React.Component {
         const cont = this.props.users.map(
             (x) => {
                 if (this.props.user.id == x.user_id)
-                    <option value={x.user_id} selected="selected" >  {x.user_name} </option >
+                    <option value={x.user_id} selected="selected" >  {x.name} </option >
                 else
-                    <option value={x.user_id}> {x.user_name} </option>
+                    <option value={x.user_id}> {x.name} </option>
             }
         );
         return (
