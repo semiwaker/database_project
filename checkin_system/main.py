@@ -40,13 +40,31 @@ def employee_info(user_id=None):
 @bp.route('/check_in')
 @login_required
 def check_in():
-    pass
+    in_time = datetime.datetime.now()
+    base = datetime.datetime.today()
+    base.hour = 9
+    base.minute = 0
+    base.second = 0
+    base.microsecond = 0
+    late = in_time > base
+
+    cursor=db.get_db().cursor()
+    db.check_in(cursor, g.user_id, in_time, late)
 
 
 @bp.route('/check_out')
 @login_required
 def check_out():
-    pass
+    out_time = datetime.datetime.now()
+    base = datetime.datetime.today()
+    base.hour = 17
+    base.minute = 0
+    base.second = 0
+    base.microsecond = 0
+    early = out_time < base
+
+    cursor=db.get_db().cursor()
+    db.check_out(cursor, g.user_id, in_time, late)
 
 
 @bp.route('/leave', methods=['GET', 'POST'])
@@ -64,6 +82,7 @@ def leave():
             "reviewer_id": db.get_superior(cursor, g.user_id)
         }
         db.add_new_leave(cursor, data)
+        return redirect(url_for('main.success'))
     return render_template('leave.html.j2')
 
 
@@ -118,6 +137,7 @@ def salary_dispense():
             } for salaryNo in g.salaryNos
         ]
         db.add_new_salary(cursor, data)
+        return redirect(url_for('main.success'))
     return render_template('salary_dispense.html.j2')
 
 
@@ -132,6 +152,7 @@ def info_update():
         old_password = request.form["old_password"]
 
         true_password = db.get_password(cursor, g.user_id)
+        msg = None
 
         if true_password == old_password:
             data = {
@@ -141,9 +162,10 @@ def info_update():
                 "password": request.form["password"]
             }
             db.update_employee_info(cursor, data)
+            msg = "修改成功！"
         else:
-            flash("密码错误！")
-    return render_template('info_update.html.j2')
+            msg = "密码错误！"
+    return render_template('info_update.html.j2', msg=msg)
 
 
 @bp.route('/employee_modify', methods=['GET'])
@@ -199,9 +221,10 @@ def department(department_id):
     g.department_name = department_data["name"]
     g.department_manager_id = department_data["manager"]
     g.department_description = department_data["description"]
+    msg = None
     if request.method == "POST":
         if not db.check_department_updatable(cursor, g.user_id, department_id):
-            flash("权限不足，无法修改部门信息！")
+            msg = "权限不足，无法修改部门信息！"
         else:
             data = {
                 "department_id": department_id,
@@ -210,7 +233,8 @@ def department(department_id):
                 "description": request.form["description"],
             }
             db.update_department_info(cursor, data)
-    return render_template("department.html.j2")
+            msg = "修改成功！"
+    return render_template("department.html.j2", msg=msg)
 
 
 @bp.route('/add_department')

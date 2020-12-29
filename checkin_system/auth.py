@@ -1,8 +1,8 @@
-from datetime import datetime
+import datetime
 import functools
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, flash, g, redirect, render_template, request, session, url_for, Markup
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -28,7 +28,7 @@ def register():
             "id_number": request.form['id_number'],
             "password": request.form['password'],
             "level": "employee",
-            "entry_date": datetime.today()
+            "entry_date": datetime.date.today()
         }
         db.add_new_employee(cursor, data)
 
@@ -37,41 +37,39 @@ def register():
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
+    error = None
     if request.method == 'POST':
         cursor = db.get_db().cursor()
         username = request.form['username']
         password = request.form['password']
 
-        user_id, true_password = db.get_id_and_password(username)
-
-        error = None
+        user_id, true_password = db.get_id_and_password(cursor, username)
 
         if username is None or user_id is None:
-            error = '用户名错误'
+            error = Markup('用户名错误')
         elif password != true_password:
-            error = '密码错误'
+            error = Markup('密码错误')
 
         if error is None:
             session.clear()
             session['user_id'] = user_id
-            return redirect(url_for('index'))
+            return redirect(url_for('main.home'))
 
-        flash(error)
-
-    return render_template('auth/login.html.j2')
+    return render_template('auth/login.html.j2', error=error)
 
 
 @bp.before_app_request
 def load_logged_in_user():
     user_id = session.get('user_id')
-    cursor = db.get_db().cursor()
+    if user_id:
+        cursor = db.get_db().cursor()
 
-    data = db.get_user_data(cursor, user_id)
+        data = db.get_user_data(cursor, user_id)
 
-    g.user_id = user_id
-    g.username = data["username"]
-    g.user_level = data["level"]
-    g.work_status = data["work_status"]
+        g.user_id = user_id
+        g.username = data["username"]
+        g.user_level = data["level"]
+        g.work_status = data["work_status"]
 
 
 @bp.route('/logout')
@@ -83,8 +81,8 @@ def logout():
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        # if g.user is None:
-        #     return redirect(url_for('auth.login'))
+        if getattr(g, "user_id", None) is None:
+            return redirect(url_for('auth.login'))
 
         return view(**kwargs)
 

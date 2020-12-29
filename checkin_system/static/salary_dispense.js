@@ -21,9 +21,9 @@ class SalaryCalulator extends React.Component {
             <tr>
                 <td>{salaryNo}</td>
                 <td>{this.props.departmentID}</td>
-                <td><input type="number" id={"basic" + salaryNo} value={basic} onChange={this.handleBasicChange} required /></td>
-                <td><input type="number" id={"deduction" + salaryNo} value={deduction} onChange={this.handleDeductionChange} required /></td>
-                <td><input type="number" id={"realSalary" + salaryNo} value={real_salary} readOnly /></td>
+                <td><input type="number" name={"basic" + salaryNo} value={basic} onChange={this.handleBasicChange} required /></td>
+                <td><input type="number" name={"deduction" + salaryNo} value={deduction} onChange={this.handleDeductionChange} required /></td>
+                <td><input type="number" name={"realSalary" + salaryNo} value={real_salary} readOnly /></td>
             </tr>
         );
     }

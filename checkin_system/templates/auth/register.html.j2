@@ -5,43 +5,45 @@
 {% endblock %}
 
 {% block content %}
-<form method="post">
-<label> 用户名 </label>
-<input type="text" id="username" required />
-<br />
-<label> 姓名 </label>
-<input type="text" id="name" required />
-<br />
-<label> 性别 </label>
-男：<input type="radio" name="gender" value="男" checked />
-<br/>
-女：<input type="radio" name="gender" value="女" />
-<br />
-<label> 出生日期 </label>
-<br />
-<input type="date" name="birthday" required />
-<br />
-<label> 部门 </label>
-<select name="department">
-{% for department in g.department_list %}
-<option value="{{ department.id }}"> {{ department.name }} </option>
-{% endfor %}
-</select>
-<br />
-<label> 电子邮件 </label>
-<input type="email" name="email" requied />
-<br />
-<label> 电话号码 </label>
-<input type="text" name="phone" requied />
-<br />
-<label> 身份证号 </label>
-<input type="text" name="id_number" requied />
-<br />
+<div class="form_div">
+    <form method="post">
+        <label> 用户名 </label>
+        <input type="text" name="username" required />
+        <br />
+        <label> 姓名 </label>
+        <input type="text" name="name" required />
+        <br />
+        <label> 性别 </label>
+        男：<input type="radio" name="gender" value="Male" checked />
+        <br/>
+        女：<input type="radio" name="gender" value="Female" />
+        <br />
+        <label> 出生日期 </label>
+        <br />
+        <input type="date" name="birthday" required />
+        <br />
+        <label> 部门 </label>
+        <select name="department">
+        {% for department in g.department_list %}
+        <option value="{{ department.id }}"> {{ department.name }} </option>
+        {% endfor %}
+        </select>
+        <br />
+        <label> 电子邮件 </label>
+        <input type="email" name="email" requied />
+        <br />
+        <label> 电话号码 </label>
+        <input type="text" name="phone" requied />
+        <br />
+        <label> 身份证号 </label>
+        <input type="text" name="id_number" requied />
+        <br />
 
-<label> 密码 </label>
-<input type="password" id="password" required />
-<br />
+        <label> 密码 </label>
+        <input type="password" name="password" required />
+        <br />
 
-<input type="submit" value="注册"/>
-</form>
+        <input type="submit" value="注册"/>
+    </form>
+</div>
 {% endblock %}

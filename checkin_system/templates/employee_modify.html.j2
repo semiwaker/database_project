@@ -5,6 +5,15 @@
 {% endblock %}
 
 {% block content %}
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <p>
+        {% for message in messages %}
+            <span class="warning">{{ message }}</span>
+        {% endfor %}
+    </p>
+    {% endif %}
+{% endwith %}
 <table>
     <tr>
         <th>员工编号</th>
@@ -22,25 +31,25 @@
     <tr>
         <form action="{{ url_for('main.employee_modify.update', user_id=user.user_id) }}" method="POST">
             <td>user.user_id </td>
-            <td><input type="text" id="name" value="{{ user.name }}" /> </td>
+            <td><input type="text" name="name" value="{{ user.name }}" /> </td>
             <td>
-                <select id="gender">
-                {% if user.gender=="男" %}
-                    <option value="男" selected>男</option>
+                <select name="gender">
+                {% if user.gender=="Male" %}
+                    <option value="Male" selected>男</option>
                 {% else %}
-                    <option value="男">男</option>
+                    <option value="Male">男</option>
                 {% endif %}
-                {% if user.gender=="女" %}
-                    <option value="女" selected>女</option>
+                {% if user.gender=="Female" %}
+                    <option value="Female" selected>女</option>
                 {% else %}
-                    <option value="女">女</option>
+                    <option value="Female">女</option>
                 {% endif %}
                 </select>
             </td>
-            <td><input type="date" id="birthday" value="{{ user.birthday }}" /> </td>
-            <td><input type="email" id="email" value="{{ user.email }}" /> </td>
-            <td><input type="text" id="phone" value="{{ user.phone }}" /> </td>
-            <td><input type="text" id="id_number" value="{{ user.id_number }}" /> </td>
+            <td><input type="date" name="birthday" value="{{ user.birthday }}" /> </td>
+            <td><input type="email" name="email" value="{{ user.email }}" /> </td>
+            <td><input type="text" name="phone" value="{{ user.phone }}" /> </td>
+            <td><input type="text" name="id_number" value="{{ user.id_number }}" /> </td>
             <td>
                 {% if g.user_type=="admin" %}
                 <select name="department">

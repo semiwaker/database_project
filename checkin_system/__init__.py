@@ -9,7 +9,8 @@ from . import auth, main, db
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
+    app.config.update(
+        ENV="development",
         DEBUG=True,
         # SEND_FILE_MAX_AGE_DEFAULT=timedelta(seconds=1),
         SECRET_KEY='dev',

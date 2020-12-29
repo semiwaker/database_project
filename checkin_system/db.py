@@ -3,9 +3,11 @@ import pymysql
 
 '''里面所有SQL语句都在前面加了个test.xxxx，是因为这样有代码提示，最后会删掉'''
 
+db_password = "123456"
 
-def get_db(name):
-    db = pymysql.connect("localhost", "root", "", name)
+def get_db(name="test"):
+    db = pymysql.connect("localhost", "root", db_password, name)
+    g.db = db
     return db
 
 
@@ -212,6 +214,15 @@ def update_department_info(cursor, data):
     pass
 
 
+def check_in(cursor, user_id, in_time, late):
+    # 缺席怎么办？
+    pass
+
+
+def check_out(cursor, user_id, out_time, early):
+    pass
+
+
 def delete_department(cursor, department_id):
     pass
 
@@ -360,8 +371,10 @@ def Query_OverruledManyTimes(cursor):
     """
 
 
-def close_db(db, exception=None):
-    db.close()
+def close_db(exception=None):
+    db = getattr(g, "db", None)
+    if db:
+        db.close()
 
 
 def init_app(app):

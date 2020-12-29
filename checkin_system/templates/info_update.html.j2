@@ -14,13 +14,16 @@
 <br />
 
 <label> 新密码 </label>
-<input type="password" id="password" required />
+<input type="password" name="password" required />
 <br />
 
 <label> 旧密码 </label>
-<input type="password" id="old_password" required />
+<input type="password" name="old_password" required />
 <br />
 
 <input type="submit" value="修改"/>
+{% if msg %}
+<p><span class="warning">{{ msg }}</span></p>
+{% endif %}
 </form>
 {% endblock %}

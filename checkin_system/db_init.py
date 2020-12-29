@@ -1,13 +1,19 @@
+from IPython import embed
+import numpy as np
+import random
 import pymysql
 
+password = ''
+
 name = "test"
-conn = pymysql.connect(host='localhost', user='root', password='', charset='utf8mb4')
+conn = pymysql.connect(host='localhost', user='root',
+                       password=password, charset='utf8mb4')
 cursor = conn.cursor()
 sql = "drop database if exists " + name
 cursor.execute(sql)
 sql = "CREATE DATABASE " + name
 cursor.execute(sql)
-db = pymysql.connect("localhost", "root", "", name)
+db = pymysql.connect("localhost", "root", password, name)
 cursor = db.cursor()
 '''
 关于违反参照完整性要进行的级联操作之后再细化定义
@@ -107,39 +113,43 @@ sql = """insert into test.METADATA
 cursor.execute(sql)
 
 # 数据生成部分
-import random
-import numpy as np
-from IPython import embed
-first_name = ['Jacob','Emily','Michael','Hannah','Joshua','Madison','Matthew','Samantha','Andrew','Ashley','Joseph','Sarah','Nicholas','Elizabeth','Anthony','Kayla','Tyler','Alexis','Daniel','Abigail']
-last_name = ['Adams','Anderson','Arnold','Bell','Carter','Charles','David','Edward','Gary','George','Harris','Jaskson','James','Peter','Smith','Walker','Williams','Rose','Oliver','Leonard','Keith','Eddie']
+first_name = ['Jacob', 'Emily', 'Michael', 'Hannah', 'Joshua', 'Madison', 'Matthew', 'Samantha', 'Andrew',
+              'Ashley', 'Joseph', 'Sarah', 'Nicholas', 'Elizabeth', 'Anthony', 'Kayla', 'Tyler', 'Alexis', 'Daniel', 'Abigail']
+last_name = ['Adams', 'Anderson', 'Arnold', 'Bell', 'Carter', 'Charles', 'David', 'Edward', 'Gary', 'George',
+             'Harris', 'Jaskson', 'James', 'Peter', 'Smith', 'Walker', 'Williams', 'Rose', 'Oliver', 'Leonard', 'Keith', 'Eddie']
 n = len(first_name)*len(last_name)
 D = 5
 D_name = ['A01', 'A02', 'B01', 'B02', 'S']
 Employee = [[
     i*len(last_name)+j,  # EmloyeeID
     first_name[i]+' '+last_name[j],  # Name
-    str(random.randint(1960, 2000))+'-'+str(random.randint(1,12)).zfill(2)+'-'+str(random.randint(1,28)).zfill(2),  # Birthdate
-    ''.join(np.random.choice(['0','1','2','3','4','5','6','7','8','9'],18,replace=True)),  # fake ID_number
-    str(random.randint(2010, 2020))+'-'+str(random.randint(1,12)).zfill(2)+'-'+str(random.randint(1,28)).zfill(2),  # Entrydate
+    str(random.randint(1960, 2000))+'-'+str(random.randint(1, 12)
+                                            ).zfill(2)+'-'+str(random.randint(1, 28)).zfill(2),  # Birthdate
+    ''.join(np.random.choice(['0', '1', '2', '3', '4', '5', '6',
+                              '7', '8', '9'], 18, replace=True)),  # fake ID_number
+    str(random.randint(2010, 2020))+'-'+str(random.randint(1, 12)
+                                            ).zfill(2)+'-'+str(random.randint(1, 28)).zfill(2),  # Entrydate
     first_name[i]+'_'+last_name[j],  # Username
     first_name[i] + '_' + last_name[j],  # Password
-    'Male' if random.randint(0,1)==0 else 'Female',  # Gender
-    ''.join(np.random.choice(['0','1','2','3','4','5','6','7','8','9'],7,replace=True)),  # fake Phone_number
-    first_name[i]+'_'+last_name[j]+'@'+('gmail.com' if random.randint(0,1)==0 else 'pku.edu.cn'),  # fake E-mail
+    'Male' if random.randint(0, 1) == 0 else 'Female',  # Gender
+    ''.join(np.random.choice(['0', '1', '2', '3', '4', '5', '6',
+                              '7', '8', '9'], 7, replace=True)),  # fake Phone_number
+    first_name[i]+'_'+last_name[j]+'@' + \
+    ('gmail.com' if random.randint(0, 1) == 0 else 'pku.edu.cn'),  # fake E-mail
     0,  # Level
-    random.randint(0,D-1),  # Department_ID
+    random.randint(0, D-1),  # Department_ID
 ] for i in range(len(first_name)) for j in range(len(last_name))]
 
-M = np.random.choice(range(n),D+1,replace=False).tolist()
+M = np.random.choice(range(n), D+1, replace=False).tolist()
 Admin = M.pop()
 for i in range(D):
-    Employee[M[i]][10]=1
-    Employee[M[i]][11]=i
-Employee[Admin][10]=2
+    Employee[M[i]][10] = 1
+    Employee[M[i]][11] = i
+Employee[Admin][10] = 2
 Employee[Admin].pop()
 # 数据插入部分
 for i in range(n):
-    if(i==Admin):
+    if(i == Admin):
         continue
         sql = '''INSERT INTO EMPLOYEE(EmployeeID, Name, BirthDate,
         ID_number, EntryDate, Username, Password, Gender, Phone_number,
@@ -157,7 +167,7 @@ for i in range(n):
         embed()
 
 for i in range(D):
-    value = [i,D_name[i],M[i],"This is "+D_name[i]+'.']
+    value = [i, D_name[i], M[i], "This is "+D_name[i]+'.']
     sql = '''INSERT INTO DEPARTMENT(Department_ID, Department, Manager_ID,
         info) VALUES ''' + str(tuple(value))
     try:

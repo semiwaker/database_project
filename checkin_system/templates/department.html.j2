@@ -33,7 +33,11 @@
 {{ g.department_description }}
 </textarea>
 
+<br />
 <input type="submit" value="修改"/>
+{% if msg %}
+<p><span class="warning">{{ msg }}</span></p>
+{% endif %}
 </form>
 <p>
 <a href="{{ url_for('main.remove_department', department_id=g.department_id) }}"> 删除部门 </a>
