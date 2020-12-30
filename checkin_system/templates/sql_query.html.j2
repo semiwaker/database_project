@@ -1,0 +1,46 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}SQL 查询{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<h3><p>预定义查询</p></h3>
+<div id="predefined_sql">
+    <ul>
+        <li><a href="{{ url_for('main.sql_query', query_id=1) }}"> 2020年1月公司内请假次数与迟到次数之和前10的员工，按照请假次数与迟到次数之和降序排序； 若次数相同，按员工姓名拼音序排序。</a></li>
+        <li><a href="{{ url_for('main.sql_query', query_id=2) }}"> 审核请假单数量最多的经理的迟到和请假情况，按照时间的降序给出结果。</a></li>
+        <li><a href="{{ url_for('main.sql_query', query_id=3) }}"> 在部门A中因缺勤早退扣发的工资不低于公司内所有员工平均实发工资（包含相等） 的所有员工。</a></li>
+        <li><a href="{{ url_for('main.sql_query', query_id=4) }}"> 人数在10人以上的部门中、 在2020年每个月的实发工资最高的员工，若存在多个员工的实发工资都相同且最高，则都列出。</a></li>
+        <li><a href="{{ url_for('main.sql_query', query_id=5) }}"> 每个月迟到总时长大于等于其所在部门平均因公请假时长的所有员工。</a></li>
+        <li><a href="{{ url_for('main.sql_query', query_id=6) }}"> 每个月迟到次数超过2次并且因私请假超过2次的所有员工，并列出他们的部门名称与部门经理姓名。</a></li>
+    </ul>
+</div>
+<form method="post">
+<label> SQL查询 </label>
+<br />
+<textarea name="sql" required>{% if last_sql %}{{ last_sql }}{% endif %}</textarea>
+<br />
+<input type="submit" value="提交"/>
+</form>
+{% if sql_results %}
+{% for result in sql_results %}
+<table frame="box" rules="all" summary="{{ result.summary }}">
+    <tr>
+        {% for u in result.title %}
+        <th>{{ u }} </th>
+        {% endfor %}
+    </tr>
+    {% for v in result.content %}
+        <tr>
+            {% for x in v %}
+                <td>{{ x }}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endif %}
+
+
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}提醒{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<table>
+    <tr>
+        <th>员工ID</th><<th>员工名</th>
+    </tr>
+    {% for employee in g.reminder_list %}
+        <tr>
+            <td>{{ employee.id }}</td>
+            <td>{{ employee.name }}</td>
+        </tr>
+    {% endfor %}
+</table>
+<form method="post"><input type="submit" value="清除所有"/></form>
+{% endblock %}
