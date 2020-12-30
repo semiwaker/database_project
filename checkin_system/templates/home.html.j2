@@ -30,11 +30,13 @@
             </li>
             <li><a href="{{ url_for('main.info_update')}}">修改自身信息</a></li>
             {% if g.user_type == 'manager' or g.user_type == 'admin' %}
+            <li><a href="{{ url_for('main.reminder') }}">提醒<span class="number_circle">{{ g.reminder_num }}</span></a></li>
             <li><a href="{{ url_for('main.leave_review') }}">请假审核</a></li>
             <li><a href="{{ url_for('main.salary_dispense') }}">工资发放</a></li>
             <li><a href="{{ url_for('main.employee_modify')}}">修改员工信息</a></li>
             {% endif %}
             {% if g.user_type == 'admin' %}
+            <li><a href="{{ url_for('main.sql_query') }}">SQL查询</a></li>
             <li> 部门列表：<br /> <ul>
                 {% for department in g.department_list %}
                 <li><a href="{{ url_for('main.department', department_id=department.id) }}">{{ deparment.name }}</a></li>

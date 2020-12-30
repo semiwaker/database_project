@@ -25,6 +25,7 @@ h1#bigtitle{
 }
 
 a:link, a:visited {
+  transition: background-color 1s;
   display:block;
   background-color: #cae6f6;
   color: #377ba8;
@@ -33,6 +34,7 @@ a:link, a:visited {
   text-decoration:none;
 }
 a:hover {
+  transition: background-color 1s;
   background-color: #20B2AA;
 }
 a:active{
@@ -41,9 +43,11 @@ a:active{
 
 input[type=submit]{
   color: #377ba8;
+  transition: background-color 1s;
   background-color: #cae6f6;
 }
 input:hover[type=submit]{
+  transition: background-color 1s;
   background-color: #20B2AA;
 }
 input:active[type=submit]{
@@ -194,4 +198,10 @@ div#operation_div{
 span.warning{
   color: #ff0000;
   font-size: 20px;
+}
+
+span.number_circle{
+  background-color: #ff0000;
+  border: 2px solid;
+  border-radius: 25px;
 }

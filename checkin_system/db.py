@@ -5,6 +5,7 @@ import pymysql
 
 db_password = "123456"
 
+
 def get_db(name="test"):
     db = pymysql.connect("localhost", "root", db_password, name)
     g.db = db
@@ -190,6 +191,8 @@ def get_department_info(cursor, department_id):
     #     "description": None
     # }
 
+def get_reminders(cursor, user_id):
+    return [{"name":None, "id": None}]
 
 def get_employee_xml(cursor, user_id):
     # (nkc) 之后再写..
@@ -214,7 +217,6 @@ def check_reviewable(cursor, user_id, leave_no):
     employee_id, department_id = result[0][0], result[0][1]
     if user_id == employee_id or department != department_id:
         return False
-    return True
 
 
 def check_dispensable(cursor, user_id, salary_nos):
@@ -448,6 +450,9 @@ def delete_department(cursor, department_id):
     cursor.execute(sql)
     g.db.commit()
 
+def clear_reminder(cursor, user_id):
+    pass
+
 
 def Query_leaveandlate_202001(cursor, topnum=10):
     sql = """with E_leaves(EmployeeID, tot_leaves) as
@@ -456,12 +461,12 @@ def Query_leaveandlate_202001(cursor, topnum=10):
         where ApplyStatus = \'accepted\' and 
             (LeaveBegin<='2020-01-31' and LeaveEnd>='2020-01-01')
         group by EmployeeID),
-        E_lates(EmployeeID, tot_lates) as 
+        E_lates(EmployeeID, tot_lates) as
         (select EmployeeID, sum(Lateornot|LeaveEarlyornot)
         from test.ATTENDENCES
         where Date >= '2020-01-01' and Date <= '2020-01-31'
         group by EmployeeID)
-    select Name, tot_leaves+tot_lates LeaveandLate from 
+    select Name, tot_leaves+tot_lates LeaveandLate from
     ((E_lates inner join E_leaves on E_lates.EmployeeID = E_leaves.EmployeeID)
     inner join test.EMPLOYEE on E_lates.EmployeeID = test.EMPLOYEE.EmployeeID)
     order by LeaveandLate desc, Name asc LIMIT """ + str(topnum)
@@ -477,14 +482,14 @@ def Query_MaxVerifier_leaves(cursor):
             from test.Leaves
             where ApplyStatus = \'accepted\'
             group by ReviewerID)
-            
-            select * from 
+
+            select * from
             test.leaves
-            where EmployeeID in 
+            where EmployeeID in
             (select ReviewerID
             from t
             where total = (select max(total) from t))
-            order by ApplyDay desc 
+            order by ApplyDay desc
             """
     cursor.execute(sql)
     return __getResult(cursor)
@@ -499,13 +504,13 @@ def Query_MaxVerifier_lates(cursor):
             where ApplyStatus = \'accepted\'
             group by ReviewerID)
 
-            select * from 
+            select * from
             test.ATTENDENCES
-            where EmployeeID in 
+            where EmployeeID in
             (select ReviewerID
             from t
             where total = (select max(total) from t)) and (Lateornot|LeaveEarlyornot)
-            order by Date desc 
+            order by Date desc
             """
     cursor.execute(sql)
     return __getResult(cursor)
@@ -530,10 +535,10 @@ def Query_MaxRealSalary_2020(cursor):
            group by Department_ID
            having count(EmployeeID)>=10)) as t inner join test.PAYROLL
             on t.EmployeeID = payroll.EmployeeID
-            where payroll.CorrespondingTime >= '2020-01-01' 
+            where payroll.CorrespondingTime >= '2020-01-01'
             and payroll.CorrespondingTime <= '2020-12-31')
-           
-           select Name, tmp.CorrespondingTime, RealSalary from 
+
+           select Name, tmp.CorrespondingTime, RealSalary from
            (select CorrespondingTime, max(RealSalary) as maxsalary
            from tmp
            group by CorrespondingTime) as t inner join tmp
@@ -549,7 +554,7 @@ def Query_HugeLatingDuration(cursor):
     # 为了方便，要不把跨月份的请假拆成两次请假事件吧
     sql = """select Name, t1.Department_ID, LatesDuration
     from(select Department_ID, avg(LeaveDuration) * 24 as AVG_leaveDuration, month
-        from (select employee.EmployeeID, Department_ID, 
+        from (select employee.EmployeeID, Department_ID,
         sum(Duration) as LeaveDuration, date_format(LeaveBegin, '%Y-%m') as month
             from test.employee inner join test.leaves
             on employee.EmployeeID = leaves.EmployeeID
@@ -584,13 +589,18 @@ def Query_OverruledManyTimes(cursor):
             group by EmployeeID, month
             having Leavetimes>=2) as t2
             on t1.EmployeeID = t2.EmployeeID and t1.month = t2.month)
-            
+
             select employee.NAME, month, Latetimes, Leavetimes, department.Department, t.Name as Verifier_name
             from (((GGperson inner join test.employee
             on GGperson.EmployeeID = employee.EmployeeID) inner join test.department
             on employee.Department_ID = department.Department_ID) inner join test.employee as t
             on Manager_ID = t.EmployeeID)
     """
+
+
+def Query_SQL(cursor, sql):
+    cursor.execute(sql)
+    return __getResult(cursor)
 
 
 def close_db(exception=None):

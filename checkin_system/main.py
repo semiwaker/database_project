@@ -1,7 +1,7 @@
 import datetime
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, flash, g, redirect, render_template, request, session, url_for, Markup
 )
 
 from . import db
@@ -23,6 +23,8 @@ def home():
             "user_id": user_id,
             'name': data["name"]
         }
+    if g.user_type != "employee":
+        g.reminder_num = len(db.get_reminders(cursor, g.user_id))
     if g.user_type == "admin":
         g.department_list = db.get_department_list(cursor)
     return render_template('home.html.j2')
@@ -48,7 +50,7 @@ def check_in():
     base.microsecond = 0
     late = in_time > base
 
-    cursor=db.get_db().cursor()
+    cursor = db.get_db().cursor()
     db.check_in(cursor, g.user_id, in_time, late)
 
 
@@ -63,8 +65,8 @@ def check_out():
     base.microsecond = 0
     early = out_time < base
 
-    cursor=db.get_db().cursor()
-    db.check_out(cursor, g.user_id, in_time, late)
+    cursor = db.get_db().cursor()
+    db.check_out(cursor, g.user_id, out_time, early)
 
 
 @bp.route('/leave', methods=['GET', 'POST'])
@@ -162,9 +164,9 @@ def info_update():
                 "password": request.form["password"]
             }
             db.update_employee_info(cursor, data)
-            msg = "修改成功！"
+            msg = Markup("修改成功！")
         else:
-            msg = "密码错误！"
+            msg = Markup("密码错误！")
     return render_template('info_update.html.j2', msg=msg)
 
 
@@ -233,7 +235,7 @@ def department(department_id):
                 "description": request.form["description"],
             }
             db.update_department_info(cursor, data)
-            msg = "修改成功！"
+            msg = Markup("修改成功！")
     return render_template("department.html.j2", msg=msg)
 
 
@@ -265,3 +267,61 @@ def success():
 @bp.route('/denied')
 def denied():
     return render_template("denied.html.j2")
+
+
+@bp.route('/sql_query', methods=['GET', 'POST'])
+@login_required
+def sql_query(query_id=None):
+    if g.user_type != 'admin':
+        return redirect(url_for('main.denied'))
+    cursor = db.get_db().cursor()
+    result = None
+    summaries = None
+    sql_results = None
+    last_sql = None
+    query_funcs = {
+        1: [db.Query_leaveandlate_202001],
+        2: [db.Query_MaxVerifier_lates, db.Query_MaxVerifier_leaves],
+        3: [db.Query_HugeDeduction],
+        4: [db.Query_MaxRealSalary_2020],
+        5: [db.Query_HugeLatingDuration],
+        6: [db.Query_OverruledManyTimes]
+    }
+    query_summaries = {
+        1: ["查询结果"],
+        2: ["迟到情况", "请假情况"],
+        3: ["查询结果"],
+        4: ["查询结果"],
+        5: ["查询结果"],
+        6: ["查询结果"],
+    }
+    if query_id:
+        results = [func(cursor) for func in query_funcs[query_id]]
+        summaries = query_summaries[query_id]
+
+    if request.method == 'POST':
+        results = [db.Query_SQL(cursor, request.form["sql"])]
+        summaries = ["查询结果"]
+        last_sql = request.form["sql"]
+
+    if results:
+        sql_results = [
+            {
+                "summary": summary,
+                "title": [u for u, v in result[0]],
+                "content": [[v for u, v in row] for row in result]
+            } for result, summary in zip(results, summaries)
+        ]
+
+    return render_template("sql_query.html.j2", sql_results=sql_results, last_sql=last_sql)
+
+
+@bp.route("/reminder", methods=["GET", "POST"])
+@login_required
+def reminder():
+    cursor = db.get_db().cursor()
+    g.reminder_list = db.get_reminders(cursor, g.user_id)
+    if request.method == 'POST':
+        db.clear_reminder(cursor, g.user_id)
+        return redirect(url_for('main.success'))
+    return render_template("reminder.html.j2")
