@@ -31,11 +31,11 @@ sql = """create table EMPLOYEE (
         Gender char(6),
         Phone_number char(20),
         E_mail char(30),
-        Level int not null,
+        Level char(10) not null,
         Department_ID int,
         primary key (EmployeeID),
         check(Gender in ('Male', 'Female')),
-        check(Level in (0, 1, 2)))"""
+        check(Level in ('employee', 'manager', 'admin')))"""
 cursor.execute(sql)
 
 sql = """create table DEPARTMENT (
@@ -71,8 +71,9 @@ sql = """create table LEAVES (
         Privateornot bool not null,
         ApplyDay date not null,
         ReviewerID int,
-        ApplyStatus bool not null default 0,
+        ApplyStatus char(10) not null,
         Duration int not null,
+        check(ApplyStatus in ('pending', 'accepted', 'rejected')),
         primary key (LeaveNo),
         foreign key(ReviewerID) references test.EMPLOYEE(EmployeeID),
         foreign key(EmployeeID) references test.EMPLOYEE(EmployeeID)) """
@@ -107,16 +108,12 @@ sql = """create table METADATA (
         )"""
 cursor.execute(sql)
 
-sql = """insert into test.METADATA
-        (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
-        values (0,0,0,0,0)"""
-cursor.execute(sql)
-
 # 数据生成部分
-first_name = ['Jacob', 'Emily', 'Michael', 'Hannah', 'Joshua', 'Madison', 'Matthew', 'Samantha', 'Andrew',
-              'Ashley', 'Joseph', 'Sarah', 'Nicholas', 'Elizabeth', 'Anthony', 'Kayla', 'Tyler', 'Alexis', 'Daniel', 'Abigail']
-last_name = ['Adams', 'Anderson', 'Arnold', 'Bell', 'Carter', 'Charles', 'David', 'Edward', 'Gary', 'George',
-             'Harris', 'Jaskson', 'James', 'Peter', 'Smith', 'Walker', 'Williams', 'Rose', 'Oliver', 'Leonard', 'Keith', 'Eddie']
+first_name = ['Jacob', 'Emily', 'Michael', 'Hannah', 'Joshua', 'Madison', 'Matthew', 'Samantha']
+#, 'Andrew','Ashley', 'Joseph', 'Sarah', 'Nicholas', 'Elizabeth', 'Anthony', 'Kayla', 'Tyler', 'Alexis', 'Daniel', 'Abigail']
+last_name = ['Adams', 'Anderson', 'Arnold', 'Bell', 'Carter', 'Charles', 'David']
+             #, 'Edward', 'Gary', 'George',
+             #'Harris', 'Jaskson', 'James', 'Peter', 'Smith', 'Walker', 'Williams', 'Rose', 'Oliver', 'Leonard', 'Keith', 'Eddie']
 n = len(first_name)*len(last_name)
 D = 5
 D_name = ['A01', 'A02', 'B01', 'B02', 'S']
@@ -136,21 +133,20 @@ Employee = [[
                               '7', '8', '9'], 7, replace=True)),  # fake Phone_number
     first_name[i]+'_'+last_name[j]+'@' + \
     ('gmail.com' if random.randint(0, 1) == 0 else 'pku.edu.cn'),  # fake E-mail
-    0,  # Level
+    'employee',  # Level
     random.randint(0, D-1),  # Department_ID
 ] for i in range(len(first_name)) for j in range(len(last_name))]
 
 M = np.random.choice(range(n), D+1, replace=False).tolist()
 Admin = M.pop()
 for i in range(D):
-    Employee[M[i]][10] = 1
+    Employee[M[i]][10] = 'manager'
     Employee[M[i]][11] = i
-Employee[Admin][10] = 2
+Employee[Admin][10] = 'admin'
 Employee[Admin].pop()
 # 数据插入部分
 for i in range(n):
     if(i == Admin):
-        continue
         sql = '''INSERT INTO EMPLOYEE(EmployeeID, Name, BirthDate,
         ID_number, EntryDate, Username, Password, Gender, Phone_number,
         E_mail, Level) VALUES ''' + str(tuple(Employee[i]))
@@ -183,3 +179,11 @@ sql = """alter table EMPLOYEE add constraint C1
 foreign key(Department_ID) references DEPARTMENT(Department_ID) on delete
  set null """
 cursor.execute(sql)
+
+
+sql = """insert into test.METADATA
+        (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
+        values """+str((n-1,D-1,0,0,0))
+cursor.execute(sql)
+db.commit()
+

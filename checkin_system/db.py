@@ -23,60 +23,155 @@ def __getResult(cursor):
 
 
 def get_department_list(cursor):
-    return [{"id": None, "name": None}]
+    sql = """select Department_ID as id, Department as name
+    from test.department"""
+    cursor.execute(sql)
+    return __getResult(cursor)
+    # return [{"id": None, "name": None}]
 
 
 def get_manager_list(cursor):
-    return [{"id": None, "name": None}]
+    sql = """select EmployeeID as id, name
+        from test.employee"""
+    cursor.execute(sql)
+    return __getResult(cursor)
+    # return [{"id": None, "name": None}]
 
 
 def get_user_data(cursor, user_id):
-    return {
-        "username": None,
-        "name": None,
-        "gender": None,
-        "birthdate": None,
-        "department_id": None,
-        "email": None,
-        "phone_number": None,
-        "id_number": None,
-        "level": None,
-        "work_status": "in"  # "in" or "out"
-    }
+    sql = """select username, name, gender, birthdate, department_id, E_mail as email,
+    phone_number, id_number, level
+    from test.employee
+    where EmployeeID = """+str(user_id)
+    cursor.execute(sql)
+    ret_dict = __getResult(cursor)
+    ret_dict["work_status"] = "in"
+    return ret_dict
+    # return {
+    #     "username": None,
+    #     "name": None,
+    #     "gender": None,
+    #     "birthdate": None,
+    #     "department_id": None,
+    #     "email": None,
+    #     "phone_number": None,
+    #     "id_number": None,
+    #     "level": None,
+    #     "work_status": "in"  # "in" or "out"
+    # }
 
 
 def get_password(cursor, userid):
-    return ""
+    sql = """select password
+            from test.employee
+            where EmployeeID = """+str(userid)
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    return result[0][0]
+    # return ""
 
 
 def get_id_and_password(cursor, username):
-    return (0, "")
+    sql = """select EmployeeID, Password
+                from test.employee
+                where Username = \'""" + username + "\'"
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    return result[0][0], result[0][1]
+    # return (0, "")
+
+
+def get_department_and_level(cursor, user_id):
+    sql = """select level, Department_ID
+                from test.employee
+                where EmployeeID = """ + str(user_id)
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    level = result[0][0]
+    department = result[0][1]
+    return department, level
 
 
 def get_reachable_user_ids(cursor, user_id):
     # 查询所有下属用户id，包括自己
-    return [user_id]
+    # (nkc)这里如果要求只用一句SQL语言倒也不是不可以，是我后来此想到的所以先这么写了，不行再改
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'employee':
+        return [user_id]
+    elif level == 'manager':
+        sql = """select EmployeeID
+            from test.employee
+            where Department_ID = """ + str(department)
+        cursor.execute(sql)
+        results = cursor.fetchall()
+        return [item[0] for item in results]
+    elif level == 'admin':
+        sql = """select EmployeeID
+            from test.employee"""
+        cursor.execute(sql)
+        results = cursor.fetchall()
+        return [item[0] for item in results]
+    # return [user_id]
 
 
 def get_superior(cursor, user_id):
-    return None
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'admin':
+        return None
+    elif level == 'manager':
+        sql = """select EmployeeID
+                from test.employee
+                where Level = \'admin\'"""
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return result[0][0]
+    elif level == 'employee':
+        sql = """select Manager_ID
+            from test.department
+            where Department_ID = """ + str(department)
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return result[0][0]
 
 
 def get_leave_list(cursor, user_id):
     # 查询所有下属的未审核的请假申请
-    return [
-        {
-            "leave_no": None,
-            "leave_begin": None,
-            "leave_end": None,
-            "leave_reason": None,
-            "apply_day": None
-        }
-    ]
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'employee':
+        return []
+    elif level == 'manager':
+        sql = """select LeaveNo as leave_no, LeaveBegin as leave_begin, LeaveEnd as leave_end,
+            LeaveReason as leave_reason, ApplyDay as apply_day
+            from test.leaves, test.employee
+            where leaves.EmployeeID = employee.EmployeeID
+                and ApplyStatus = \'pending\'
+                and Department_ID = """+str(department)+""" 
+                and not leaves.EmployeeID = """+str(user_id)
+        cursor.execute(sql)
+        return __getResult(cursor)
+    elif level == 'admin':
+        sql = """select LeaveNo as leave_no, LeaveBegin as leave_begin, LeaveEnd as leave_end,
+            LeaveReason as leave_reason, ApplyDay as apply_day
+            from test.leaves, test.employee
+            where leaves.EmployeeID = employee.EmployeeID
+                and ApplyStatus = \'pending\'"""
+        cursor.execute(sql)
+        return __getResult(cursor)
+
+    # return [
+    #     {
+    #         "leave_no": None,
+    #         "leave_begin": None,
+    #         "leave_end": None,
+    #         "leave_reason": None,
+    #         "apply_day": None
+    #     }
+    # ]
 
 
 def get_salary_list(cursor, user_id):
     # 查询所有下属的工资情况，用于发放
+    # (nkc)又没懂这里的需求QAQ
     last_salary_no = 0  # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
     return ([
         ()  # departmentID,basicSalary,deduction,realSalary
@@ -84,52 +179,115 @@ def get_salary_list(cursor, user_id):
 
 
 def get_department_info(cursor, department_id):
-    return {
-        "name": None,
-        "manager_id": None,
-        "description": None
-    }
+    sql = """select Department as name, manager_id, info as description
+            from test.department
+            where Department_ID = """ + str(department_id)
+    cursor.execute(sql)
+    return __getResult(cursor)
+    # return {
+    #     "name": None,
+    #     "manager_id": None,
+    #     "description": None
+    # }
 
 
 def get_employee_xml(cursor, user_id):
+    # (nkc) 之后再写..
     if user_id is None:
         # return all employee
         pass
     return ""
 
 
-def check_reviewable(curosr, user_id, leave_no):
+def check_reviewable(cursor, user_id, leave_no):
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'admin':
+        return True
+    elif level == 'employee':
+        return False
+    sql = '''select leaves.EmployeeID, Department_ID
+    from test.leaves, test.employee
+    where LeaveNo = '''+str(leave_no)+''' 
+        and leaves.EmployeeID = employee.EmployeeID'''
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    employee_id, department_id = result[0][0], result[0][1]
+    if user_id == employee_id or department != department_id:
+        return False
     return True
 
 
-def check_dispensable(curosr, user_id, salary_nos):
+def check_dispensable(cursor, user_id, salary_nos):
+    # (nkc)等确定了薪水发放规则之后写
     # salary_nos is []
     return True
 
 
-def check_department_updatable(curosr, user_id, deparment_id):
-    return True
+def check_department_updatable(cursor, user_id, deparment_id):
+    deparment, level = get_department_and_level(cursor, user_id)
+    if level == 'admin' or (level == 'manager' and deparment == deparment_id):
+        return True
+    return False
 
 
 def accept_leave(cursor, leave_no):
-    pass
+    # (nkc)还未验证正确性
+    sql = '''update test.leaves
+    set ApplyStatus = 'accepted'
+    where LeaveNo = ''' + str(leave_no)
+    cursor.execute(sql)
+    g.db.commit()
+
 
 
 def reject_leave(cursor, leave_no):
-    pass
+    # (nkc)还未验证正确性
+    sql = '''update test.leaves
+        set ApplyStatus = 'rejected'
+        where LeaveNo = ''' + str(leave_no)
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def new_employee_id(cursor):
-    return None
+    sql = '''select LastEmployeeNo + 1
+    from test.metadata '''
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    sql = '''update test.metadata
+        set LastDepartmentNo = LastDepartmentNo + 1'''
+    cursor.execute(sql)
+    g.db.commit()
+    return result[0][0]
 
 
 def new_department_id(cursor):
-    # 顺便创建一个只有空信息的部门
-    return None
+    sql = '''select LastDepartmentNo + 1
+    from test.metadata '''
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    ret = result[0][0]
+    sql = '''insert into test.department(Department_ID, Department) 
+    VALUES ('''+str(ret)+',\'No.'+str(ret+1)+'\')'
+    cursor.execute(sql)
+    g.db.commit()
+    sql = '''update test.metadata
+    set LastDepartmentNo = LastDepartmentNo + 1'''
+    cursor.execute(sql)
+    g.db.commit()
+    return ret
 
 
 def new_leave_id(cursor):
-    return None
+    sql = '''select LastLeaveNo + 1
+    from test.metadata '''
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    sql = '''update test.metadata
+        set LastLeaveNo = LastLeaveNo + 1'''
+    cursor.execute(sql)
+    g.db.commit()
+    return result[0][0]
 
 
 def add_new_employee(cursor, data):
@@ -147,7 +305,17 @@ def add_new_employee(cursor, data):
     #     "level": ,
     #     "entry_date":
     # }
-    pass
+
+    # (nkc)还未验证正确性
+    tmp = (data['employee_id'], data['name'], data['birthdate'], data['id_number'],
+           data['entry_date'], data['username'], data['password'], data['gender'],
+           data['phone_number'], data['email'], data['level'], data['department_id'])
+    sql = '''insert into test.employee
+    (EMPLOYEEID, NAME, BIRTHDATE, ID_NUMBER, ENTRYDATE, USERNAME, PASSWORD, 
+    GENDER, PHONE_NUMBER, E_MAIL, LEVEL, DEPARTMENT_ID) 
+        VALUES ''' + str(tmp)
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def add_new_leave(cursor, data):
@@ -160,7 +328,29 @@ def add_new_leave(cursor, data):
     #     "apply_day": ,
     #     "reviewer_id":
     # }
-    pass
+
+    # (nkc)还未验证正确性
+    not_private = ['因公']
+    import datetime
+    duration = (datetime.strptime(data['leave_end'],'%Y-%m-%d') -
+            datetime.strptime(data['leave_begin'], '%Y-%m-%d')).days
+    tmp = (data['user_id'],
+           data['leave_no'],
+           data['leave_begin'],
+           data['leave_end'],
+           data['leave_reason'],
+           data['leave_reason'] not in not_private,
+           data['apply_day'],
+           data['reviewer_id'],
+           'pending',
+           duration
+           )
+    sql = '''insert into test.leaves
+        (EmployeeID, LeaveNo, LeaveBegin, LeaveEnd, LeaveReason, 
+        Privateornot, ApplyDay, ReviewerID, ApplyStatus, Duration)
+            VALUES ''' + str(tmp)
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def add_new_salary(cursor, data):
@@ -176,6 +366,7 @@ def add_new_salary(cursor, data):
     # ]
     # 记得更改最后的salayNo
     pass
+    # salary相关的我都放最后写
 
 
 def update_employee_info(cursor, data):
@@ -201,7 +392,27 @@ def update_employee_info(cursor, data):
     #     "id_number":
     #     "level":
     # }
-    pass
+
+    # (nkc)还未验证正确性
+    # (nkc)Age之后填
+    if 'level' in data:
+        sql = '''update test.employee 
+        set Name = ''' + data['name'] + ''',
+        Gender = ''' + data['gender'] + ''',
+        Department_ID = ''' + data['department_id'] + ''',
+        E_mail = ''' + data['email'] + ''',
+        Phone_number = ''' + data['phone_number'] + ''',
+        ID_number = ''' + data['id_number'] + ''',
+        Level = ''' + data['level'] +''' 
+        where EmployeeID = ''' + str(data['user_id'])
+    else:
+        sql = '''update test.employee 
+        set E_mail = ''' + data['email'] + ''',
+        Phone_number = ''' + data['phone_number'] + ''',
+        Password = ''' + data['password'] + ''' 
+        where EmployeeID = ''' + str(data['user_id'])
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def update_department_info(cursor, data):
@@ -211,7 +422,15 @@ def update_department_info(cursor, data):
     #     "manager": ,
     #     "description":
     # }
-    pass
+
+    # (nkc)此处是否需要更新这个人的level?
+    sql = '''update test.department 
+            set Department = ''' + data['name'] + ''',
+            Manager_ID = ''' + data['manager'] + ''',
+            info = ''' + data['description'] + ''' 
+            where Department_ID = ''' + str(data['department_id'])
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def check_in(cursor, user_id, in_time, late):
@@ -224,14 +443,17 @@ def check_out(cursor, user_id, out_time, early):
 
 
 def delete_department(cursor, department_id):
-    pass
+    sql = '''delete from test.department 
+            where Department_ID = ''' + str(department_id)
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def Query_leaveandlate_202001(cursor, topnum=10):
     sql = """with E_leaves(EmployeeID, tot_leaves) as
         (select EmployeeID, sum(Duration)
         from test.LEAVES
-        where ApplyStatus = 1 and 
+        where ApplyStatus = \'accepted\' and 
             (LeaveBegin<='2020-01-31' and LeaveEnd>='2020-01-01')
         group by EmployeeID),
         E_lates(EmployeeID, tot_lates) as 
@@ -253,7 +475,7 @@ def Query_MaxVerifier_leaves(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
             from test.Leaves
-            where ApplyStatus = 1
+            where ApplyStatus = \'accepted\'
             group by ReviewerID)
             
             select * from 
@@ -274,7 +496,7 @@ def Query_MaxVerifier_lates(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
             from test.Leaves
-            where ApplyStatus = 1
+            where ApplyStatus = \'accepted\'
             group by ReviewerID)
 
             select * from 
@@ -358,7 +580,7 @@ def Query_OverruledManyTimes(cursor):
             having Latetimes>=2) as t1 inner join
             (select EmployeeID, sum(Privateornot) as Leavetimes, date_format(LeaveBegin, '%Y-%m') as month
             from test.leaves
-            where ApplyStatus = 1
+            where ApplyStatus = \'accepted\'
             group by EmployeeID, month
             having Leavetimes>=2) as t2
             on t1.EmployeeID = t2.EmployeeID and t1.month = t2.month)
@@ -382,12 +604,20 @@ def init_app(app):
 
 
 if __name__ == "__main__":
-    db = get_db("test")
+    # db = get_db("test")
+    db = pymysql.connect("localhost", "root", "", "test")
     cursor = db.cursor()
-    t1 = Query_leaveandlate_202001(cursor)
-    t2 = Query_MaxVerifier_leaves(cursor)
-    t3 = Query_HugeDeduction(cursor)
-    t4 = Query_MaxRealSalary_2020(cursor)
-    t5 = Query_HugeLatingDuration(cursor)
-    t6 = Query_OverruledManyTimes(cursor)
-    close_db(db)
+    # t1 = Query_leaveandlate_202001(cursor)
+    # t2 = Query_MaxVerifier_leaves(cursor)
+    # t3 = Query_HugeDeduction(cursor)
+    # t4 = Query_MaxRealSalary_2020(cursor)
+    # t5 = Query_HugeLatingDuration(cursor)
+    # t6 = Query_OverruledManyTimes(cursor)
+    a = get_reachable_user_ids(cursor, 21)
+    a = get_superior(cursor, 34)
+    # a = new_employee_id(cursor)
+    # a = new_department_id(cursor)
+    # delete_department(cursor, 5)
+    print(a)
+    db.close()
+    # close_db(db)
