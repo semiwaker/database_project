@@ -69,13 +69,14 @@ def load_logged_in_user():
         g.user_id = user_id
         g.username = data["username"]
         g.user_level = data["level"]
+        g.department_id = data["department_id"]
         g.work_status = data["work_status"]
 
 
 @bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('home'))
+    return redirect(url_for('main.home'))
 
 
 def login_required(view):

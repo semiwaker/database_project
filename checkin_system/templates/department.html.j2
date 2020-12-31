@@ -8,14 +8,14 @@
 <form method="post">
 <label> 部门编号 {{ g.deparment_id }} </label>
 <label> 部门名称 </label>
-{% if g.user_type == "admin" %}
+{% if g.user_level == "admin" %}
 <input type="text" name="department_name" value="g.department_name" requied />
 {% else %}
 <input type="text" name="department_name" value="g.department_name" disabled />
 {% endif %}
 <br />
 <label> 部门经理 </label>
-{% if g.user_type == "admin" %}
+{% if g.user_level == "admin" %}
 <select name="manager" requied>
 {% else %}
 <select name="manager" disabled>

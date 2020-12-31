@@ -8,6 +8,7 @@
 <table>
 <tr>
     <th>请假条编号</th>
+    <th>申请人</th>
     <th>请假开始日期</th>
     <th>请假结束日期</th>
     <th>请假原因</th>
@@ -18,17 +19,18 @@
 {% for leave in g.leave_list %}
 <tr>
     <td>{{ leave.leave_no }}</td>
+    <td>{{ leave.name }}</td>
     <td>{{ leave.leave_begin }}</td>
     <td>{{ leave.leave_end }}</td>
     <td>{{ leave.leave_reason }}</td>
     <td>{{ leave.apply_day }}</td>
     <td>
-        <form method="post" action="{{ url_for('main.leave_review.accept', leave_no=leave.leave_no) }}">
+        <form method="post" action="{{ url_for('main.accept_leave', leave_no=leave.leave_no) }}">
             <button type="submit" onclick="this.disabled=true;">接受</button>
         </form>
     </td>
     <td>
-        <form method="post" action="{{ url_for('main.leave_review.reject', leave_no=leave.leave_no) }}">
+        <form method="post" action="{{ url_for('main.reject_leave', leave_no=leave.leave_no) }}">
             <button type="submit" onclick="this.disabled=true;">拒绝</button>
         </form>
     </td>

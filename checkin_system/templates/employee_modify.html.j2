@@ -29,9 +29,9 @@
     </tr>
     {% for user in g.reachable_users %}
     <tr>
-        <form action="{{ url_for('main.employee_modify.update', user_id=user.user_id) }}" method="POST">
-            <td>user.user_id </td>
-            <td><input type="text" name="name" value="{{ user.name }}" /> </td>
+        <form action="{{ url_for('main.employee_modify_update', user_id=user.user_id) }}" method="POST">
+            <td>{{ user.user_id }} </td>
+            <td><input type="text" name="name">{{ user.name }}<input/> </td>
             <td>
                 <select name="gender">
                 {% if user.gender=="Male" %}
@@ -51,7 +51,7 @@
             <td><input type="text" name="phone" value="{{ user.phone }}" /> </td>
             <td><input type="text" name="id_number" value="{{ user.id_number }}" /> </td>
             <td>
-                {% if g.user_type=="admin" %}
+                {% if g.user_level=="admin" %}
                 <select name="department">
                 {% else %}
                 <select name="department" disabled>
@@ -66,7 +66,7 @@
                 </select>
             </td>
             <td>
-                {% if g.user_type=="admin" %}
+                {% if g.user_level=="admin" %}
                 <select name="level">
                 {% else %}
                 <select name="level" diabled>
