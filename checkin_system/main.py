@@ -48,6 +48,7 @@ def check_in():
     base.minute = 0
     base.second = 0
     base.microsecond = 0
+    # 我希望这里的late是一个数值类型用来记录迟到了多少分钟
     late = in_time > base
 
     cursor = db.get_db().cursor()
@@ -63,6 +64,7 @@ def check_out():
     base.minute = 0
     base.second = 0
     base.microsecond = 0
+    # 我希望这里的early是一个数值类型用来记录早退了多少分钟
     early = out_time < base
 
     cursor = db.get_db().cursor()

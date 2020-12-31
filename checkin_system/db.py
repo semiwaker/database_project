@@ -3,7 +3,7 @@ import pymysql
 
 '''里面所有SQL语句都在前面加了个test.xxxx，是因为这样有代码提示，最后会删掉'''
 
-db_password = "123456"
+db_password = ""
 
 
 def get_db(name="test"):
@@ -437,11 +437,35 @@ def update_department_info(cursor, data):
 
 def check_in(cursor, user_id, in_time, late):
     # 缺席怎么办？
-    pass
+    sql = '''select LastAttendenceNo + 1
+        from test.metadata '''
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    A = result[0][0]+1
+    sql = '''update test.metadata
+            set LastAttendenceNo = LastAttendenceNo + 1'''
+    cursor.execute(sql)
+    g.db.commit()
+    item = [user_id, A,
+            in_time.strftime("%Y-%m-%d"),
+            in_time.strftime("%H:%M:%S"),
+            late > 0,
+            late]
+    sql = '''insert into test.attendences(EmployeeID, AttendenceNo, Date, 
+    ArriveTime, Lateornot, TimeMissing)
+    VALUES ''' + str(tuple(item))
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def check_out(cursor, user_id, out_time, early):
-    pass
+    sql = '''update test.attendences
+    set LeaveTime = '''+out_time.strftime("%H:%M:%S")+''', 
+    LeaveEarlyornot = '''+str(early>0)+''', 
+    TimeMissing = TimeMissing +'''+str(early)+'''
+    where Date = ''' + out_time.strftime("%Y-%m-%d")
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def delete_department(cursor, department_id):

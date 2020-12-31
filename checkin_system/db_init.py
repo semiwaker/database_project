@@ -2,6 +2,8 @@ from IPython import embed
 import numpy as np
 import random
 import pymysql
+import datetime
+
 
 password = ''
 
@@ -84,7 +86,7 @@ sql = """create table ATTENDENCES (
         AttendenceNo int,
         Date date not null ,
         ArriveTime time not null ,
-        LeaveTime time not null ,
+        LeaveTime time,
         Lateornot bool,
         LeaveEarlyornot bool,
         TimeMissing int not null,
@@ -180,10 +182,86 @@ foreign key(Department_ID) references DEPARTMENT(Department_ID) on delete
  set null """
 cursor.execute(sql)
 
+# 生成请假与考勤记录,先跑起来，之后再改
+L=0
+A=0
+for eid in range(n):
+    print(eid)
+    if Employee[eid][10] == 'employee':
+        late_P = 0.1
+        leave_P = 0.1
+        verifier = M[Employee[eid][11]]
+    elif Employee[eid][10] == 'manager':
+        late_P = 0.02
+        leave_P = 0.02
+        verifier = Admin
+    else:
+        continue
+
+    begin = datetime.date(2020,1,6)
+    end = datetime.date(2020,12,25)
+    d = begin
+    delta = datetime.timedelta(days=1)
+    while d <= end:
+        day = 0
+        if random.random() < leave_P:
+            if random.random() < 0.5:
+                private = True
+            else:
+                private = False
+            day = random.randint(1, 5)
+            if (not private) or random.random() < 0.6:
+                a_s = 'accepted'
+            else:
+                a_s = 'rejected'
+            s_day = d.strftime("%Y-%m-%d")
+            dd = d
+            for i in range(day):
+                dd += delta
+            e_day = dd.strftime("%Y-%m-%d")
+            a_day = (d-delta).strftime("%Y-%m-%d")
+            item = [eid, L, s_day, e_day,
+                    '胃疼' if private else '因公', private,
+                    a_day, verifier, a_s, day]
+            L += 1
+            sql = '''insert into test.leaves(EmployeeID, LeaveNo, LeaveBegin, 
+            LeaveEnd, LeaveReason, Privateornot, ApplyDay, 
+            ReviewerID, ApplyStatus, Duration) VALUES '''+str(tuple(item))
+            cursor.execute(sql)
+            db.commit()
+            if a_s == 'rejected':
+                day = 0
+        for i in range(day):
+            d += delta
+        for i in range(5-day):
+            missing = 0
+            if random.random() < late_P:
+                lateornot = True
+                missing += 1
+            else:
+                lateornot = False
+            if random.random() < late_P:
+                leaveearlyornot = True
+                missing += 1
+            else:
+                leaveearlyornot = False
+            item = [eid, A, d.strftime("%Y-%m-%d"),
+                    '09:01:00' if lateornot else '08:59:00',
+                    '16:59:00' if leaveearlyornot else '17:01:00',
+                    lateornot, leaveearlyornot, missing]
+            A += 1
+            sql = '''insert into test.attendences(EmployeeID, AttendenceNo,
+            Date, ArriveTime, LeaveTime, Lateornot, LeaveEarlyornot, TimeMissing) 
+            VALUES ''' + str(tuple(item))
+            cursor.execute(sql)
+            db.commit()
+            d += delta
+        d += delta
+        d += delta
 
 sql = """insert into test.METADATA
         (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
-        values """+str((n-1,D-1,0,0,0))
+        values """+str((n-1,D-1,0,L,A))
 cursor.execute(sql)
 db.commit()
 
