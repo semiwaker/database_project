@@ -21,7 +21,7 @@ def home():
 @bp.route('/employee_info_<user_id>.xml', methods=['GET'])
 @login_required
 def employee_info(user_id):
-    if g.user_level != "admin" and user_id is "all":
+    if g.user_level != "admin" and user_id == "all":
         return redirect(url_for("main.denied"))
     cursor = db.get_db().cursor()
     return db.get_employee_xml(user_id)
@@ -32,12 +32,9 @@ def employee_info(user_id):
 def check_in():
     in_time = datetime.datetime.now()
     base = datetime.datetime.today()
-    base.hour = 9
-    base.minute = 0
-    base.second = 0
-    base.microsecond = 0
+    base = datetime.datetime(base.year, base.month, base.day, 9)
     # 我希望这里的late是一个数值类型用来记录迟到了多少分钟
-    late = in_time > base
+    late = (base - in_time).seconds // 60
 
     cursor = db.get_db().cursor()
     db.check_in(cursor, g.user_id, in_time, late)
@@ -48,12 +45,9 @@ def check_in():
 def check_out():
     out_time = datetime.datetime.now()
     base = datetime.datetime.today()
-    base.hour = 17
-    base.minute = 0
-    base.second = 0
-    base.microsecond = 0
+    base = datetime.datetime(base.year, base.month, base.day, 17)
     # 我希望这里的early是一个数值类型用来记录早退了多少分钟
-    early = out_time < base
+    early = (out_time - base).seconds // 60
 
     cursor = db.get_db().cursor()
     db.check_out(cursor, g.user_id, out_time, early)

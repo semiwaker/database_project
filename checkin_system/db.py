@@ -233,7 +233,7 @@ def check_reviewable(cursor, user_id, leave_no):
         return False
     sql = '''select leaves.EmployeeID, Department_ID
     from test.leaves, test.employee
-    where LeaveNo = '''+str(leave_no)+''' 
+    where LeaveNo = '''+str(leave_no)+'''
         and leaves.EmployeeID = employee.EmployeeID'''
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -275,6 +275,7 @@ def reject_leave(cursor, leave_no):
 
 
 def new_employee_id(cursor):
+    # 无法更新
     sql = '''select LastEmployeeNo + 1
     from test.metadata '''
     cursor.execute(sql)
@@ -292,7 +293,7 @@ def new_department_id(cursor):
     cursor.execute(sql)
     result = cursor.fetchall()
     ret = result[0][0]
-    sql = '''insert into test.department(Department_ID, Department) 
+    sql = '''insert into test.department(Department_ID, Department)
     VALUES ('''+str(ret)+',\'No.'+str(ret+1)+'\')'
     cursor.execute(sql)
     g.db.commit()
@@ -336,8 +337,8 @@ def add_new_employee(cursor, data):
            data['entry_date'], data['username'], data['password'], data['gender'],
            data['phone_number'], data['email'], data['level'], data['department_id'])
     sql = '''insert into test.employee
-    (EMPLOYEEID, NAME, BIRTHDATE, ID_NUMBER, ENTRYDATE, USERNAME, PASSWORD, 
-    GENDER, PHONE_NUMBER, E_MAIL, LEVEL, DEPARTMENT_ID) 
+    (EMPLOYEEID, NAME, BIRTHDATE, ID_NUMBER, ENTRYDATE, USERNAME, PASSWORD,
+    GENDER, PHONE_NUMBER, E_MAIL, LEVEL, DEPARTMENT_ID)
         VALUES ''' + str(tmp)
     cursor.execute(sql)
     g.db.commit()
@@ -370,7 +371,7 @@ def add_new_leave(cursor, data):
            duration
            )
     sql = '''insert into test.leaves
-        (EmployeeID, LeaveNo, LeaveBegin, LeaveEnd, LeaveReason, 
+        (EmployeeID, LeaveNo, LeaveBegin, LeaveEnd, LeaveReason,
         Privateornot, ApplyDay, ReviewerID, ApplyStatus, Duration)
             VALUES ''' + str(tmp)
     cursor.execute(sql)
@@ -419,7 +420,7 @@ def update_employee_info(cursor, data):
 
     # (nkc)还未验证正确性
     if 'level' in data:
-        sql = '''update test.employee 
+        sql = '''update test.employee
         set Name = \'''' + data['name'] + '''\',
         Gender = \' ''' + data['gender'] + '''\',
         Birthdate = \'''' + data['birthdate'] + '''\',
@@ -427,14 +428,14 @@ def update_employee_info(cursor, data):
         E_mail = \'''' + data['email'] + '''\',
         Phone_number = \'''' + data['phone_number'] + '''\',
         ID_number = \'''' + data['id_number'] + '''\',
-        Level = \'''' + data['level'] + '''\' 
+        Level = \'''' + data['level'] + '''\'
         where EmployeeID = ''' + str(data['user_id'])
     else:
         print(data['email'])
-        sql = '''update test.employee 
+        sql = '''update test.employee
         set E_mail = \'''' + data['email'] + '''\',
         Phone_number = \'''' + data['phone_number'] + '''\',
-        Password = \'''' + data['password'] + '''\' 
+        Password = \'''' + data['password'] + '''\'
         where EmployeeID = ''' + str(data['user_id'])
     cursor.execute(sql)
     g.db.commit()
@@ -449,10 +450,10 @@ def update_department_info(cursor, data):
     # }
 
     # (nkc)此处是否需要更新这个人的level?
-    sql = '''update test.department 
+    sql = '''update test.department
             set Department = ''' + data['name'] + ''',
             Manager_ID = ''' + data['manager'] + ''',
-            info = ''' + data['description'] + ''' 
+            info = ''' + data['description'] + '''
             where Department_ID = ''' + str(data['department_id'])
     cursor.execute(sql)
     g.db.commit()
@@ -474,7 +475,7 @@ def check_in(cursor, user_id, in_time, late):
             in_time.strftime("%H:%M:%S"),
             late > 0,
             late]
-    sql = '''insert into test.attendences(EmployeeID, AttendenceNo, Date, 
+    sql = '''insert into test.attendences(EmployeeID, AttendenceNo, Date,
     ArriveTime, Lateornot, TimeMissing)
     VALUES ''' + str(tuple(item))
     cursor.execute(sql)
@@ -483,8 +484,8 @@ def check_in(cursor, user_id, in_time, late):
 
 def check_out(cursor, user_id, out_time, early):
     sql = '''update test.attendences
-    set LeaveTime = '''+out_time.strftime("%H:%M:%S")+''', 
-    LeaveEarlyornot = '''+str(early > 0)+''', 
+    set LeaveTime = '''+out_time.strftime("%H:%M:%S")+''',
+    LeaveEarlyornot = '''+str(early > 0)+''',
     TimeMissing = TimeMissing +'''+str(early)+'''
     where Date = ''' + out_time.strftime("%Y-%m-%d")
     cursor.execute(sql)
@@ -492,7 +493,7 @@ def check_out(cursor, user_id, out_time, early):
 
 
 def delete_department(cursor, department_id):
-    sql = '''delete from test.department 
+    sql = '''delete from test.department
             where Department_ID = ''' + str(department_id)
     cursor.execute(sql)
     g.db.commit()
@@ -506,7 +507,7 @@ def Query_leaveandlate_202001(cursor, topnum=10):
     sql = """with E_leaves(EmployeeID, tot_leaves) as
         (select EmployeeID, sum(Duration)
         from test.LEAVES
-        where ApplyStatus = \'accepted\' and 
+        where ApplyStatus = \'accepted\' and
             (LeaveBegin<='2020-01-31' and LeaveEnd>='2020-01-01')
         group by EmployeeID),
         E_lates(EmployeeID, tot_lates) as

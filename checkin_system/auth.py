@@ -28,9 +28,13 @@ def register():
             "id_number": request.form['id_number'],
             "password": request.form['password'],
             "level": "employee",
-            "entry_date": datetime.date.today()
+            "entry_date": datetime.date.today().strftime("%Y-%m-%d")
         }
         db.add_new_employee(cursor, data)
+        session.clear()
+        session["user_id"], _ = db.get_id_and_password(
+            cursor, data["username"])
+        return redirect("main.success")
 
     return render_template('auth/register.html.j2')
 
