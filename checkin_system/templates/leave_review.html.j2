@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-<table>
+<table class="table table-hover">
 <tr>
     <th>请假条编号</th>
     <th>申请人</th>
@@ -26,12 +26,16 @@
     <td>{{ leave.apply_day }}</td>
     <td>
         <form method="post" action="{{ url_for('main.accept_leave', leave_no=leave.leave_no) }}">
-            <button type="submit" onclick="this.disabled=true;">接受</button>
+            <button type="submit" class="btn btn-success">
+            接受
+            </button>
         </form>
     </td>
     <td>
         <form method="post" action="{{ url_for('main.reject_leave', leave_no=leave.leave_no) }}">
-            <button type="submit" onclick="this.disabled=true;">拒绝</button>
+            <button type="submit" class="btn btn-danger">
+            拒绝
+            </button>
         </form>
     </td>
 </tr>

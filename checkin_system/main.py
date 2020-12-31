@@ -93,6 +93,7 @@ def accept_leave(leave_no):
     if not db.check_reviewable(cursor, g.user_id, leave_no):
         return redirect(url_for("main.denied"))
     db.accept_leave(cursor, leave_no)
+    return leave_review()
 
 
 @bp.route('/leave_review/reject/<leave_no>', methods=['POST'])
@@ -102,6 +103,7 @@ def reject_leave(leave_no):
     if not db.check_reviewable(cursor, g.user_id, leave_no):
         return redirect(url_for("main.denied"))
     db.reject_leave(cursor, leave_no)
+    return leave_review()
 
 
 @bp.route('/salary_dispense', methods=['GET', 'POST'])

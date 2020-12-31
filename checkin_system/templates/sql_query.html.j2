@@ -17,15 +17,17 @@
     </ul>
 </div>
 <form method="post" action="{{ url_for('main.sql_query', query_id=0) }}">
-<label> SQL查询 </label>
-<br />
-<textarea name="sql" required>{% if last_sql %}{{ last_sql }}{% endif %}</textarea>
-<br />
-<input type="submit" value="提交"/>
+<div class="form-group">
+    <label> SQL查询 </label>
+    <textarea name="sql" class="form-control" required>{% if last_sql %}{{ last_sql }}{% endif %}</textarea>
+</div>
+<button class="btn btn-primary" type="submit"> 提交</button>
 </form>
+<br/>
 {% if sql_results %}
 {% for result in sql_results %}
-<table frame="box" rules="all" summary="{{ result.summary }}">
+<h3>{{ result.summary }}</h3>
+<table frame="box" rules="all" summary="{{ result.summary }}" class="table table-bordered table-hover">
     <tr>
         {% for u in result.title %}
         <th>{{ u }} </th>

@@ -5,10 +5,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="message">
-<dialog>
-操作失败！没有操作权限。
-</dialog>
-<a href="{{ url_for('main.home') }}">返回主页</a>
-</div>
+<h2 class='bg-danger'>
+没有操作权限。
+</h2>
+<a href="{{ url_for('main.home') }}" class="btn btn-primary">返回主页</a>
 {% endblock %}

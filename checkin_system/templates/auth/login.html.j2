@@ -5,17 +5,13 @@
 {% endblock %}
 
 {% block content %}
+<div class="panel panel-default">
+<div class="panel-heading"><h2>请登录</h2></div>
 <form class="form-signin" method="post">
-    <h2 class="form-signin-heading">请登录</h2>
     <label for="inputUsername" class="sr-only">用户名</label>
     <input type="text" name="username" id="inputUsername" class="form-control" placeholder="用户名" required="" autofocus="">
     <label for="inputPassword" class="sr-only">密码</label>
     <input type="password" name="password" id="inputPassword" class="form-control" placeholder="密码" required="">
-    {# <div class="checkbox">
-        <label>
-        <input type="checkbox" value="remember-me"> Remember me
-        </label>
-    </div> #}
     {% if error %}
     <div class="alert alert-danger">
         {{ error }}
@@ -23,5 +19,6 @@
     {% endif %}
     <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
 </form>
+</div>
 
 {% endblock %}

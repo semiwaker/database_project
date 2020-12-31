@@ -14,7 +14,7 @@
     </p>
     {% endif %}
 {% endwith %}
-<table>
+<table class="table-condensed">
     <tr>
         <th>员工编号</th>
         <th>员工姓名</th>
@@ -31,9 +31,9 @@
     <tr>
         <form action="{{ url_for('main.employee_modify_update', user_id=user.user_id) }}" method="POST">
             <td>{{ user.user_id }} </td>
-            <td><input type="text" name="name" value="{{ user.name }}" /> </td>
+            <td><input type="text" name="name" value="{{ user.name }}" class="form-control" /> </td>
             <td>
-                <select name="gender">
+                <select name="gender" class="form-control">
                 {% if user.gender=="Male" %}
                     <option value="Male" selected>男</option>
                 {% else %}
@@ -46,15 +46,15 @@
                 {% endif %}
                 </select>
             </td>
-            <td><input type="date" name="birthday" value="{{ user.birthday }}" /> </td>
-            <td><input type="email" name="email" value="{{ user.email }}" /> </td>
-            <td><input type="text" name="phone" value="{{ user.phone }}" /> </td>
-            <td><input type="text" name="id_number" value="{{ user.id_number }}" /> </td>
+            <td><input type="date" name="birthday" value="{{ user.birthday }}" class="form-control" /> </td>
+            <td><input type="email" name="email" value="{{ user.email }}" class="form-control" /> </td>
+            <td><input type="text" name="phone" value="{{ user.phone }}" class="form-control" /> </td>
+            <td><input type="text" name="id_number" value="{{ user.id_number }}" class="form-control" /> </td>
             <td>
                 {% if g.user_level=="admin" %}
-                <select name="department">
+                <select name="department" class="form-control">
                 {% else %}
-                <select name="department" disabled>
+                <select name="department" class="form-control" disabled>
                 {% endif %}
                 {% for department in g.department_list %}
                     {% if user.department_id == department.id %}
@@ -67,9 +67,9 @@
             </td>
             <td>
                 {% if g.user_level=="admin" %}
-                <select name="level">
+                <select name="level" class="form-control">
                 {% else %}
-                <select name="level" disabled>
+                <select name="level" class="form-control" disabled>
                 {% endif %}
                 {% if user.level == "employee" %}
                 <option value="employee" selected>员工</option>
@@ -88,7 +88,7 @@
                 {% endif %}
                 </select>
             </td>
-            <td><input type="submit" value="修改"/></td>
+            <td><button type="submit" class="btn btn-primary">修改</button></td>
         </form>
     </tr>
     {% endfor %}

@@ -6,24 +6,29 @@
 
 {% block content %}
 <form method="post">
-<label> 电子邮件 </label>
-<input type="email" name="email" value="{{ g.email }}" requied />
-<br />
-<label> 电话号码 </label>
-<input type="text" name="phone" value="{{ g.phone }}" requied />
-<br />
+<div class="form-group">
+    <label> 电子邮件 </label>
+    <input type="email" name="email" value="{{ g.email }}" class="form-control" requied />
+</div>
 
-<label> 新密码 </label>
-<input type="password" name="password" required />
-<br />
+<div class="form-group">
+    <label> 电话号码 </label>
+    <input type="text" name="phone" value="{{ g.phone }}" class="form-control" requied />
+</div>
 
-<label> 旧密码 </label>
-<input type="password" name="old_password" required />
-<br />
+<div class="form-group">
+    <label> 新密码 </label>
+    <input type="password" name="password" class="form-control" required />
+</div>
 
-<input type="submit" value="修改"/>
+<div class="form-group">
+    <label> 旧密码 </label>
+    <input type="password" name="old_password" class="form-control" required />
+</div>
+
+<button type="submit" class="btn btn-primary">修改</button>
 {% if msg %}
-<p><span class="warning">{{ msg }}</span></p>
+<div class="alert alert-danger">{{ msg }}</div>
 {% endif %}
 </form>
 {% endblock %}

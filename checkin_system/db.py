@@ -240,6 +240,7 @@ def check_reviewable(cursor, user_id, leave_no):
     employee_id, department_id = result[0][0], result[0][1]
     if user_id == employee_id or department != department_id:
         return False
+    return True
 
 
 def check_dispensable(cursor, user_id, salary_nos):
