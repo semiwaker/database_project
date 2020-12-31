@@ -2,9 +2,20 @@ import datetime
 from flask import g
 import pymysql
 
+import os
+
 '''里面所有SQL语句都在前面加了个test.xxxx，是因为这样有代码提示，最后会删掉'''
 
-db_password = ""
+
+def get_password():
+    if not os.path.exists("./db_password.txt"):
+        return ""
+    with open("./db_password.txt", "r") as file:
+        db_password = file.read()
+    return db_password
+
+
+db_password = get_password()
 
 
 def get_db(name="test"):
@@ -468,7 +479,7 @@ def check_in(cursor, user_id, in_time, late):
 def check_out(cursor, user_id, out_time, early):
     sql = '''update test.attendences
     set LeaveTime = '''+out_time.strftime("%H:%M:%S")+''', 
-    LeaveEarlyornot = '''+str(early>0)+''', 
+    LeaveEarlyornot = '''+str(early > 0)+''', 
     TimeMissing = TimeMissing +'''+str(early)+'''
     where Date = ''' + out_time.strftime("%Y-%m-%d")
     cursor.execute(sql)

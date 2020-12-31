@@ -3,9 +3,16 @@ import numpy as np
 import random
 import pymysql
 import datetime
+import os
 
+def get_password():
+    if not os.path.exists("./db_password.txt"):
+        return ""
+    with open("./db_password.txt", "r") as file:
+        db_password = file.read()
+    return db_password
 
-password = ''
+password = get_password()
 
 name = "test"
 conn = pymysql.connect(host='localhost', user='root',

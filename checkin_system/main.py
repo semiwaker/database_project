@@ -178,9 +178,10 @@ def employee_modify():
     cursor = db.get_db().cursor()
     g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
     g.reachable_users = []
+    g.department_list = db.get_department_list(cursor)
     for user_id in g.reachable_user_ids:
         data = db.get_user_data(cursor, user_id)
-        g.reachable_users += {
+        g.reachable_users += [{
             "user_id": user_id,
             "name": data['name'],
             "gender": data['gender'],
@@ -190,7 +191,7 @@ def employee_modify():
             "phone": data['phone_number'],
             "id_number": data['id_number'],
             "level": data["level"]
-        }
+        }]
     return render_template('employee_modify.html.j2')
 
 
@@ -198,7 +199,7 @@ def employee_modify():
 @login_required
 def employee_modify_update(user_id):
     cursor = db.get_db().cursor()
-    if user_id not in db.get_reachable_user_ids(cursor, g.user_id):
+    if int(user_id) not in db.get_reachable_user_ids(cursor, g.user_id):
         flash("权限不足，无法修改个人信息！")
     else:
         data = {
@@ -213,6 +214,7 @@ def employee_modify_update(user_id):
             "level": request.form["level"]
         }
         db.update_employee_info(cursor, data)
+    return employee_modify()
 
 
 @bp.route('/department/<department_id>', methods=['GET', 'POST'])
@@ -277,10 +279,11 @@ def sql_query(query_id):
     if g.user_level != 'admin':
         return redirect(url_for('main.denied'))
     cursor = db.get_db().cursor()
-    result = None
+    results = None
     summaries = None
     sql_results = None
     last_sql = None
+    query_id = int(query_id)
     query_funcs = {
         1: [db.Query_leaveandlate_202001],
         2: [db.Query_MaxVerifier_lates, db.Query_MaxVerifier_leaves],
@@ -297,6 +300,7 @@ def sql_query(query_id):
         5: ["查询结果"],
         6: ["查询结果"],
     }
+
     if query_id != 0:
         results = [func(cursor) for func in query_funcs[query_id]]
         summaries = query_summaries[query_id]
@@ -310,8 +314,8 @@ def sql_query(query_id):
         sql_results = [
             {
                 "summary": summary,
-                "title": [u for u, v in result[0]],
-                "content": [[v for u, v in row] for row in result]
+                "title": [u for u, v in result[0].items()],
+                "content": [[v for u, v in row.items()] for row in result]
             } for result, summary in zip(results, summaries)
         ]
 

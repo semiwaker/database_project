@@ -9,12 +9,15 @@
 <form method="post">
 <label> 用户名 </label>
 <input type="text" name="username" required />
+<br/>
 <label> 密码 </label>
 <input type="password" name="password" required />
+<br/>
 <input type="submit" value="登录" />
+<br/>
 {% if error %}
 <p>
-    <span class="warning">{{ message }}</span>
+    <span class="warning">{{ error }}</span>
 </p>
 {% endif %}
 </form>
