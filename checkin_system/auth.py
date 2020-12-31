@@ -48,7 +48,7 @@ def login():
         if username is None or user_id is None:
             error = Markup('用户名错误')
         elif password != true_password:
-            error = Markup('密码错误')
+            error = Markup('Wrong password')
 
         if error is None:
             session.clear()
@@ -61,7 +61,7 @@ def login():
 @bp.before_app_request
 def load_logged_in_user():
     user_id = session.get('user_id')
-    if user_id:
+    if user_id is not None:
         cursor = db.get_db().cursor()
 
         data = db.get_user_data(cursor, user_id)
