@@ -192,7 +192,7 @@ def get_salary_list(cursor, user_id):
     # 每一个员工应该有一个与月份无关的基本工资和这个月的deduction
     # 这个月的deduction要不就按一次迟到早退扣100，缺勤扣200算好了……
     # 假定一个月最后一天发工资
-    # (nkc)又没懂这里的需求QAQ
+    # TODO
     today = datetime.date.today()
     last_salary_no = 0  # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
     return ([
@@ -218,7 +218,7 @@ def get_reminders(cursor, user_id):
 
 
 def get_employee_xml(cursor, user_id):
-    # (nkc) 之后再写..
+    # TODO
     if user_id is None:
         # return all employee
         pass
@@ -355,7 +355,6 @@ def add_new_leave(cursor, data):
 
     # (nkc)还未验证正确性
     not_private = ['因公']
-    # import datetime
     duration = (datetime.datetime.strptime(data['leave_end'], '%Y-%m-%d') -
                 datetime.datetime.strptime(data['leave_begin'], '%Y-%m-%d')).days
     tmp = (data['user_id'],
@@ -418,22 +417,23 @@ def update_employee_info(cursor, data):
     # }
 
     # (nkc)还未验证正确性
-    # (lzz)Age改成birthdate
     if 'level' in data:
         sql = '''update test.employee 
-        set Name = ''' + data['name'] + ''',
-        Gender = ''' + data['gender'] + ''',
+        set Name = \'''' + data['name'] + '''\',
+        Gender = \' ''' + data['gender'] + '''\',
+        Birthdate = \'''' + data['birthdate'] + '''\',
         Department_ID = ''' + data['department_id'] + ''',
-        E_mail = ''' + data['email'] + ''',
-        Phone_number = ''' + data['phone_number'] + ''',
-        ID_number = ''' + data['id_number'] + ''',
-        Level = ''' + data['level'] + ''' 
+        E_mail = \'''' + data['email'] + '''\',
+        Phone_number = \'''' + data['phone_number'] + '''\',
+        ID_number = \'''' + data['id_number'] + '''\',
+        Level = \'''' + data['level'] + '''\' 
         where EmployeeID = ''' + str(data['user_id'])
     else:
+        print(data['email'])
         sql = '''update test.employee 
-        set E_mail = ''' + data['email'] + ''',
-        Phone_number = ''' + data['phone_number'] + ''',
-        Password = ''' + data['password'] + ''' 
+        set E_mail = \'''' + data['email'] + '''\',
+        Phone_number = \'''' + data['phone_number'] + '''\',
+        Password = \'''' + data['password'] + '''\' 
         where EmployeeID = ''' + str(data['user_id'])
     cursor.execute(sql)
     g.db.commit()

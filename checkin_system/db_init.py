@@ -127,7 +127,7 @@ n = len(first_name)*len(last_name)
 D = 5
 D_name = ['A01', 'A02', 'B01', 'B02', 'S']
 Employee = [[
-    i*len(last_name)+j,  # EmloyeeID
+    i*len(last_name)+j+1,  # EmloyeeID
     first_name[i]+' '+last_name[j],  # Name
     str(random.randint(1960, 2000))+'-'+str(random.randint(1, 12)
                                             ).zfill(2)+'-'+str(random.randint(1, 28)).zfill(2),  # Birthdate
@@ -143,26 +143,26 @@ Employee = [[
     first_name[i]+'_'+last_name[j]+'@' + \
     ('gmail.com' if random.randint(0, 1) == 0 else 'pku.edu.cn'),  # fake E-mail
     'employee',  # Level
-    random.randint(0, D-1),  # Department_ID
+    random.randint(1, D),  # Department_ID
 ] for i in range(len(first_name)) for j in range(len(last_name))]
 
-M = np.random.choice(range(n), D+1, replace=False).tolist()
+M = np.random.choice(range(1, n+1), D+1, replace=False).tolist()
 Admin = M.pop()
-for i in range(D):
-    Employee[M[i]][10] = 'manager'
-    Employee[M[i]][11] = i
-Employee[Admin][10] = 'admin'
-Employee[Admin].pop()
+for i in range(1, D+1):
+    Employee[M[i-1]-1][10] = 'manager'
+    Employee[M[i-1]-1][11] = i
+Employee[Admin-1][10] = 'admin'
+Employee[Admin-1].pop()
 # 数据插入部分
-for i in range(n):
+for i in range(1,n+1):
     if(i == Admin):
         sql = '''INSERT INTO EMPLOYEE(EmployeeID, Name, BirthDate,
         ID_number, EntryDate, Username, Password, Gender, Phone_number,
-        E_mail, Level) VALUES ''' + str(tuple(Employee[i]))
+        E_mail, Level) VALUES ''' + str(tuple(Employee[i-1]))
     else:
         sql = '''INSERT INTO EMPLOYEE(EmployeeID, Name, BirthDate,
         ID_number, EntryDate, Username, Password, Gender, Phone_number,
-        E_mail, Level, Department_ID) VALUES '''+str(tuple(Employee[i]))
+        E_mail, Level, Department_ID) VALUES '''+str(tuple(Employee[i-1]))
     try:
         cursor.execute(sql)
         db.commit()
@@ -171,8 +171,8 @@ for i in range(n):
         print("Insert Employee Error")
         embed()
 
-for i in range(D):
-    value = [i, D_name[i], M[i], "This is "+D_name[i]+'.']
+for i in range(1, D+1):
+    value = [i, D_name[i-1], M[i-1], "This is "+D_name[i-1]+'.']
     sql = '''INSERT INTO DEPARTMENT(Department_ID, Department, Manager_ID,
         info) VALUES ''' + str(tuple(value))
     try:
@@ -192,13 +192,13 @@ cursor.execute(sql)
 # 生成请假与考勤记录,先跑起来，之后再改
 L=0
 A=0
-for eid in range(n):
+for eid in range(1, n+1):
     print(eid)
-    if Employee[eid][10] == 'employee':
+    if Employee[eid-1][10] == 'employee':
         late_P = 0.1
         leave_P = 0.1
-        verifier = M[Employee[eid][11]]
-    elif Employee[eid][10] == 'manager':
+        verifier = M[Employee[eid-1][11]-1]
+    elif Employee[eid-1][10] == 'manager':
         late_P = 0.02
         leave_P = 0.02
         verifier = Admin
@@ -227,10 +227,10 @@ for eid in range(n):
                 dd += delta
             e_day = dd.strftime("%Y-%m-%d")
             a_day = (d-delta).strftime("%Y-%m-%d")
+            L += 1
             item = [eid, L, s_day, e_day,
                     '胃疼' if private else '因公', private,
                     a_day, verifier, a_s, day]
-            L += 1
             sql = '''insert into test.leaves(EmployeeID, LeaveNo, LeaveBegin, 
             LeaveEnd, LeaveReason, Privateornot, ApplyDay, 
             ReviewerID, ApplyStatus, Duration) VALUES '''+str(tuple(item))
@@ -252,11 +252,11 @@ for eid in range(n):
                 missing += 1
             else:
                 leaveearlyornot = False
+            A += 1
             item = [eid, A, d.strftime("%Y-%m-%d"),
                     '09:01:00' if lateornot else '08:59:00',
                     '16:59:00' if leaveearlyornot else '17:01:00',
                     lateornot, leaveearlyornot, missing]
-            A += 1
             sql = '''insert into test.attendences(EmployeeID, AttendenceNo,
             Date, ArriveTime, LeaveTime, Lateornot, LeaveEarlyornot, TimeMissing) 
             VALUES ''' + str(tuple(item))
@@ -268,7 +268,7 @@ for eid in range(n):
 
 sql = """insert into test.METADATA
         (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
-        values """+str((n-1,D-1,0,L,A))
+        values """+str((n,D,0,L,A))
 cursor.execute(sql)
 db.commit()
 
