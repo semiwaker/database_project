@@ -1,3 +1,4 @@
+import datetime
 from flask import g
 import pymysql
 
@@ -45,7 +46,9 @@ def get_user_data(cursor, user_id):
     from test.employee
     where EmployeeID = """+str(user_id)
     cursor.execute(sql)
-    ret_dict = __getResult(cursor)
+    ret_dict = __getResult(cursor)[0]
+    today = datetime.date.today()
+    # TODO: 查询今天是否签到过
     ret_dict["work_status"] = "in"
     return ret_dict
     # return {
@@ -141,17 +144,17 @@ def get_leave_list(cursor, user_id):
     if level == 'employee':
         return []
     elif level == 'manager':
-        sql = """select LeaveNo as leave_no, LeaveBegin as leave_begin, LeaveEnd as leave_end,
+        sql = """select LeaveNo as leave_no, Name as name, LeaveBegin as leave_begin, LeaveEnd as leave_end,
             LeaveReason as leave_reason, ApplyDay as apply_day
             from test.leaves, test.employee
             where leaves.EmployeeID = employee.EmployeeID
                 and ApplyStatus = \'pending\'
-                and Department_ID = """+str(department)+""" 
+                and Department_ID = """+str(department)+"""
                 and not leaves.EmployeeID = """+str(user_id)
         cursor.execute(sql)
         return __getResult(cursor)
     elif level == 'admin':
-        sql = """select LeaveNo as leave_no, LeaveBegin as leave_begin, LeaveEnd as leave_end,
+        sql = """select LeaveNo as leave_no, Name as name, LeaveBegin as leave_begin, LeaveEnd as leave_end,
             LeaveReason as leave_reason, ApplyDay as apply_day
             from test.leaves, test.employee
             where leaves.EmployeeID = employee.EmployeeID
@@ -171,8 +174,12 @@ def get_leave_list(cursor, user_id):
 
 
 def get_salary_list(cursor, user_id):
-    # 查询所有下属的工资情况，用于发放
+    # 查询user_id所有下属的工资情况，每一个一个元组。
+    # 每一个员工应该有一个与月份无关的基本工资和这个月的deduction
+    # 这个月的deduction要不就按一次迟到早退扣100，缺勤扣200算好了……
+    # 假定一个月最后一天发工资
     # (nkc)又没懂这里的需求QAQ
+    today = datetime.date.today()
     last_salary_no = 0  # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
     return ([
         ()  # departmentID,basicSalary,deduction,realSalary
@@ -184,15 +191,17 @@ def get_department_info(cursor, department_id):
             from test.department
             where Department_ID = """ + str(department_id)
     cursor.execute(sql)
-    return __getResult(cursor)
+    return __getResult(cursor)[0]
     # return {
     #     "name": None,
     #     "manager_id": None,
     #     "description": None
     # }
 
+
 def get_reminders(cursor, user_id):
-    return [{"name":None, "id": None}]
+    return [{"name": None, "id": None}]
+
 
 def get_employee_xml(cursor, user_id):
     # (nkc) 之后再写..
@@ -239,7 +248,6 @@ def accept_leave(cursor, leave_no):
     where LeaveNo = ''' + str(leave_no)
     cursor.execute(sql)
     g.db.commit()
-
 
 
 def reject_leave(cursor, leave_no):
@@ -333,16 +341,16 @@ def add_new_leave(cursor, data):
 
     # (nkc)还未验证正确性
     not_private = ['因公']
-    import datetime
-    duration = (datetime.strptime(data['leave_end'],'%Y-%m-%d') -
-            datetime.strptime(data['leave_begin'], '%Y-%m-%d')).days
+    # import datetime
+    duration = (datetime.datetime.strptime(data['leave_end'], '%Y-%m-%d') -
+                datetime.datetime.strptime(data['leave_begin'], '%Y-%m-%d')).days
     tmp = (data['user_id'],
            data['leave_no'],
            data['leave_begin'],
            data['leave_end'],
            data['leave_reason'],
            data['leave_reason'] not in not_private,
-           data['apply_day'],
+           data['apply_day'].strftime("%Y-%m-%d"),
            data['reviewer_id'],
            'pending',
            duration
@@ -387,7 +395,7 @@ def update_employee_info(cursor, data):
     #     "user_id":
     #     "name":
     #     "gender":
-    #     "age":
+    #     "birthdate":
     #     "department_id":
     #     "email":
     #     "phone_number":
@@ -396,7 +404,7 @@ def update_employee_info(cursor, data):
     # }
 
     # (nkc)还未验证正确性
-    # (nkc)Age之后填
+    # (lzz)Age改成birthdate
     if 'level' in data:
         sql = '''update test.employee 
         set Name = ''' + data['name'] + ''',
@@ -405,7 +413,7 @@ def update_employee_info(cursor, data):
         E_mail = ''' + data['email'] + ''',
         Phone_number = ''' + data['phone_number'] + ''',
         ID_number = ''' + data['id_number'] + ''',
-        Level = ''' + data['level'] +''' 
+        Level = ''' + data['level'] + ''' 
         where EmployeeID = ''' + str(data['user_id'])
     else:
         sql = '''update test.employee 
@@ -473,6 +481,7 @@ def delete_department(cursor, department_id):
             where Department_ID = ''' + str(department_id)
     cursor.execute(sql)
     g.db.commit()
+
 
 def clear_reminder(cursor, user_id):
     pass

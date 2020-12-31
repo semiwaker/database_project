@@ -18,22 +18,22 @@ def home():
     g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
     g.reachable_users = []
     for user_id in g.reachable_user_ids:
-        data = db.get_user_data(cursor, data)
+        data = db.get_user_data(cursor, user_id)
         g.reachable_users += {
             "user_id": user_id,
             'name': data["name"]
         }
-    if g.user_type != "employee":
+    if g.user_level != "employee":
         g.reminder_num = len(db.get_reminders(cursor, g.user_id))
-    if g.user_type == "admin":
+    if g.user_level == "admin":
         g.department_list = db.get_department_list(cursor)
     return render_template('home.html.j2')
 
 
-@bp.route('/employee_info.xml', methods=['GET'])
+@bp.route('/employee_info_<user_id>.xml', methods=['GET'])
 @login_required
-def employee_info(user_id=None):
-    if g.user_type != "admin" and user_id is None:
+def employee_info(user_id):
+    if g.user_level != "admin" and user_id is "all":
         return redirect(url_for("main.denied"))
     cursor = db.get_db().cursor()
     return db.get_employee_xml(user_id)
@@ -98,7 +98,7 @@ def leave_review():
     return render_template('leave_review.html.j2')
 
 
-@bp.route('/leave_review/accept', methods=['POST'])
+@bp.route('/leave_review/accept/<leave_no>', methods=['POST'])
 @login_required
 def accept_leave(leave_no):
     cursor = db.get_db().cursor()
@@ -107,7 +107,7 @@ def accept_leave(leave_no):
     db.accept_leave(cursor, leave_no)
 
 
-@bp.route('/leave_review/reject', methods=['POST'])
+@bp.route('/leave_review/reject/<leave_no>', methods=['POST'])
 @login_required
 def reject_leave(leave_no):
     cursor = db.get_db().cursor()
@@ -152,11 +152,11 @@ def info_update():
     info = db.get_user_data(cursor, g.user_id)
     g.email = info["email"]
     g.phone = info["phone_number"]
+    msg = None
     if request.method == 'POST':
         old_password = request.form["old_password"]
 
         true_password = db.get_password(cursor, g.user_id)
-        msg = None
 
         if true_password == old_password:
             data = {
@@ -179,7 +179,7 @@ def employee_modify():
     g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
     g.reachable_users = []
     for user_id in g.reachable_user_ids:
-        data = db.get_user_data(cursor, data)
+        data = db.get_user_data(cursor, user_id)
         g.reachable_users += {
             "user_id": user_id,
             "name": data['name'],
@@ -194,7 +194,7 @@ def employee_modify():
     return render_template('employee_modify.html.j2')
 
 
-@bp.route('/employee_modify/update', methods=['POST'])
+@bp.route('/employee_modify/update/<user_id>', methods=['POST'])
 @login_required
 def employee_modify_update(user_id):
     cursor = db.get_db().cursor()
@@ -215,20 +215,20 @@ def employee_modify_update(user_id):
         db.update_employee_info(cursor, data)
 
 
-@bp.route('/department', methods=['GET', 'POST'])
+@bp.route('/department/<department_id>', methods=['GET', 'POST'])
 @login_required
 def department(department_id):
     cursor = db.get_db().cursor()
-    g.manager_list = None
+    g.manager_list = db.get_manager_list(cursor)
     g.department_id = department_id
     department_data = db.get_department_info(cursor, department_id)
     g.department_name = department_data["name"]
-    g.department_manager_id = department_data["manager"]
+    g.department_manager_id = department_data["manager_id"]
     g.department_description = department_data["description"]
     msg = None
     if request.method == "POST":
         if not db.check_department_updatable(cursor, g.user_id, department_id):
-            msg = "权限不足，无法修改部门信息！"
+            msg = Markup("权限不足，无法修改部门信息！")
         else:
             data = {
                 "department_id": department_id,
@@ -251,7 +251,7 @@ def add_department():
     return redirect(url_for("main.department", department_id=department_id))
 
 
-@bp.route('/remove_department')
+@bp.route('/remove_department/<department_id>')
 @login_required
 def remove_department(department_id):
     if g.user_level != "admin":
@@ -271,10 +271,10 @@ def denied():
     return render_template("denied.html.j2")
 
 
-@bp.route('/sql_query', methods=['GET', 'POST'])
+@bp.route('/sql_query/<query_id>', methods=['GET', 'POST'])
 @login_required
-def sql_query(query_id=None):
-    if g.user_type != 'admin':
+def sql_query(query_id):
+    if g.user_level != 'admin':
         return redirect(url_for('main.denied'))
     cursor = db.get_db().cursor()
     result = None
@@ -297,7 +297,7 @@ def sql_query(query_id=None):
         5: ["查询结果"],
         6: ["查询结果"],
     }
-    if query_id:
+    if query_id != 0:
         results = [func(cursor) for func in query_funcs[query_id]]
         summaries = query_summaries[query_id]
 
