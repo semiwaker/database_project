@@ -416,20 +416,21 @@ def update_employee_info(cursor, data):
     # (nkc)还未验证正确性
     if 'level' in data:
         sql = '''update test.employee 
-        set Name = ''' + data['name'] + ''',
-        Gender = ''' + data['gender'] + ''',
-        Birthdate = ''' + data['birthdate'] + ''',
+        set Name = \'''' + data['name'] + '''\',
+        Gender = \' ''' + data['gender'] + '''\',
+        Birthdate = \'''' + data['birthdate'] + '''\',
         Department_ID = ''' + data['department_id'] + ''',
-        E_mail = ''' + data['email'] + ''',
-        Phone_number = ''' + data['phone_number'] + ''',
-        ID_number = ''' + data['id_number'] + ''',
-        Level = ''' + data['level'] + ''' 
+        E_mail = \'''' + data['email'] + '''\',
+        Phone_number = \'''' + data['phone_number'] + '''\',
+        ID_number = \'''' + data['id_number'] + '''\',
+        Level = \'''' + data['level'] + '''\' 
         where EmployeeID = ''' + str(data['user_id'])
     else:
+        print(data['email'])
         sql = '''update test.employee 
-        set E_mail = ''' + data['email'] + ''',
-        Phone_number = ''' + data['phone_number'] + ''',
-        Password = ''' + data['password'] + ''' 
+        set E_mail = \'''' + data['email'] + '''\',
+        Phone_number = \'''' + data['phone_number'] + '''\',
+        Password = \'''' + data['password'] + '''\' 
         where EmployeeID = ''' + str(data['user_id'])
     cursor.execute(sql)
     g.db.commit()
