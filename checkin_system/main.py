@@ -15,18 +15,6 @@ bp = Blueprint('main', __name__, url_prefix='/main')
 @login_required
 def home():
     cursor = db.get_db().cursor()
-    g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
-    g.reachable_users = []
-    for user_id in g.reachable_user_ids:
-        data = db.get_user_data(cursor, user_id)
-        g.reachable_users += {
-            "user_id": user_id,
-            'name': data["name"]
-        }
-    if g.user_level != "employee":
-        g.reminder_num = len(db.get_reminders(cursor, g.user_id))
-    if g.user_level == "admin":
-        g.department_list = db.get_department_list(cursor)
     return render_template('home.html.j2')
 
 

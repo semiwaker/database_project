@@ -5,45 +5,59 @@
 {% endblock %}
 
 {% block content %}
-<div class="form_div">
-    <form method="post">
+<form method="post">
+    <div class="form-group">
         <label> 用户名 </label>
-        <input type="text" name="username" required />
-        <br />
+        <input type="text" name="username" placeholder="用户名" class="form-control" autofocus required />
+    </div>
+
+    <div class="form-group">
         <label> 姓名 </label>
-        <input type="text" name="name" required />
-        <br />
+        <input type="text" name="name" class="form-control" required />
+    </div>
+
+    <div class="form-group">
         <label> 性别 </label>
-        男：<input type="radio" name="gender" value="Male" checked />
-        <br/>
-        女：<input type="radio" name="gender" value="Female" />
-        <br />
+    <div class="radio">
+        <label> <input type="radio" name="gender" value="Male" />男</label><br/>
+        <label> <input type="radio" name="gender" value="Female"/>女</label>
+    </div>
+    </div>
+
+    <div class="form-group">
         <label> 出生日期 </label>
-        <br />
-        <input type="date" name="birthday" required />
-        <br />
+        <input type="date" name="birthday" class="form-control" required />
+    </div>
+
+    <div class="form-group">
         <label> 部门 </label>
-        <select name="department">
+        <select name="department" class="form-control">
         {% for department in g.department_list %}
         <option value="{{ department.id }}"> {{ department.name }} </option>
         {% endfor %}
         </select>
-        <br />
+    </div>
+
+    <div class="form-group">
         <label> 电子邮件 </label>
-        <input type="email" name="email" requied />
-        <br />
+        <input type="email" name="email" class="form-control" requied />
+    </div>
+
+    <div class="form-group">
         <label> 电话号码 </label>
-        <input type="text" name="phone" requied />
-        <br />
+        <input type="text" name="phone" class="form-control" requied />
+    </div>
+
+    <div class="form-group">
         <label> 身份证号 </label>
-        <input type="text" name="id_number" requied />
-        <br />
+        <input type="text" name="id_number" class="form-control" requied />
+    </div>
 
+    <div class="form-group">
         <label> 密码 </label>
-        <input type="password" name="password" required />
-        <br />
+        <input type="password" name="password" class="form-control" required />
+    </div>
 
-        <input type="submit" value="注册"/>
-    </form>
-</div>
+    <button type="submit" class="btn btn-primary">注册</button>
+</form>
 {% endblock %}

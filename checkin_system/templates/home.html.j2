@@ -9,44 +9,10 @@
 {% endblock %}
 
 {% block content %}
-<div id="wrapper">
-    <div id="employee_display_div">
-    {% if g.user_level == 'admin' or g.user_level == 'manager' %}
-        <div id="employee_selection" user_id='{{ g.user_id }}' users='{{ g.reachable_users }}' ></div>
-    {% endif %}
-    <div id="employee_display" employee_id="{{ g.user_id }}"></div>
-    </div>
-    <div id="operation_div">
-        <ul class="links">
-            <li>
-            {% if g.work_status == 'out' %}
-            <a href="{{ url_for('main.check_in') }}"> 到岗 </a>
-            {% else %}
-            <a href="{{ url_for('main.check_out') }}"> 离岗 </a>
-            {% endif %}
-            </li>
-            <li>
-            <a href="{{ url_for('main.leave')}}"> 请假 </a>
-            </li>
-            <li><a href="{{ url_for('main.info_update')}}">修改自身信息</a></li>
-            {% if g.user_level == 'manager' or g.user_level == 'admin' %}
-            <li><a href="{{ url_for('main.reminder') }}">提醒<span class="number_circle">{{ g.reminder_num }}</span></a></li>
-            <li><a href="{{ url_for('main.leave_review') }}">请假审核</a></li>
-            <li><a href="{{ url_for('main.salary_dispense') }}">工资发放</a></li>
-            <li><a href="{{ url_for('main.employee_modify')}}">修改员工信息</a></li>
-            {% endif %}
-            {% if g.user_level == 'admin' %}
-                <li><a href="{{ url_for('main.sql_query', query_id=0) }}">SQL查询</a></li>
-                {# <li><span class="placeholder">placeholder</span> </li> #}
-                <li> <span class="label">部门列表：</span> </li>
-                {% for department in g.department_list %}
-                    <li><a href="{{ url_for('main.department', department_id=department.id) }}">{{ department.name }}</a></li>
-                {% endfor %}
-                <li><a href="{{ url_for('main.add_department') }}">+</a></li>
-            {% else %}
-                <li><a href="{{ url_for('main.department', department_id=g.department_id) }}">部门信息</a></li>
-            {% endif %}
-        </ul>
-    </div>
-</div>
+<h2>员工展示框</h2>
+{% if g.user_level == 'admin' or g.user_level == 'manager' %}
+    <div id="employee_selection" user_id='{{ g.user_id }}' users='{{ g.reachable_users }}' ></div>
+{% endif %}
+<div id="employee_display" employee_id="{{ g.user_id }}"></div>
+
 {% endblock %}

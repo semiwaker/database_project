@@ -2,37 +2,100 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
-    <title>{% block title %}{% endblock %} - xxxx考勤系统</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap-theme.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='sticky_footer.css') }}">
     <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='npm.js') }}"></script>
     {% block script %}{% endblock %}
+    <title>{% block title %}{% endblock %} - xxxx考勤系统</title>
 </head>
 
 <body>
-    <h1 id="bigtitle">xxxx考勤系统</h1>
-    <nav>
-        <ul>
-            <li><a href="{{ url_for('main.home') }}">主页</a></li>
-            {% if g.user_id %}
-            <li><span>{{ g.username }}</span></li>
-            <li><a href="{{ url_for('auth.logout') }}">登出</a></li>
-            {% else %}
-            <li><a href="{{ url_for('auth.register') }}">注册</a></li>
-            <li><a href="{{ url_for('auth.login') }}">登录</a></li>
-            {% endif %}
-        </ul>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{{ url_for('main.home') }}"> xxxx考勤系统 </a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="{{ url_for('main.home') }}">主页</a></li>
+                {% if g.user_id %}
+                <li><a href="{{ url_for('main.info_update') }} ">{{ g.username }}</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">登出</a></li>
+                {% else %}
+                <li><a href="{{ url_for('auth.register') }}">注册</a></li>
+                <li><a href="{{ url_for('auth.login') }}">登录</a></li>
+                {% endif %}
+            </ul>
+        </div>
     </nav>
-    <div id="content">
-        <header>
-            {% block header %}{% endblock %}
-        </header>
-        {% block content %}{% endblock %}
+    <div class="container">
+        <div class="row row-offcanvas row-offcanvas-right">
+            <div class="col-xs-12 col-sm-9">
+                <header>
+                    {% block header %}{% endblock %}
+                </header>
+                {% block content %}{% endblock %}
+            </div>
+            {% if g.user_id %}
+            <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id='sidebar'>
+                <div class="list-group">
+                    <a href="{{ url_for('main.home') }}" class="list-group-item"> 主页 </a>
+                    {% if g.work_status == 'out' %}
+                    <a href="{{ url_for('main.check_in') }}" class="list-group-item"> 到岗 </a>
+                    {% else %}
+                    <a href="{{ url_for('main.check_out') }}" class="list-group-item"> 离岗 </a>
+                    {% endif %}
+                    <a href="{{ url_for('main.leave')}}" class="list-group-item"> 请假 </a>
+                    <a href="{{ url_for('main.info_update')}}" class="list-group-item">修改自身信息</a>
+                    {% if g.user_level == 'manager' or g.user_level == 'admin' %}
+                    <a href="{{ url_for('main.reminder') }}" class="list-group-item">
+                        提醒
+                        {% if g.reminder_num %}
+                        <span class="badge">{{ g.reminder_num }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('main.leave_review') }}" class="list-group-item">
+                        请假审核
+                        {% if g.leave_num %}
+                        <span class="badge">{{ g.leave_num }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('main.salary_dispense') }}" class="list-group-item">工资发放</a>
+                    <a href="{{ url_for('main.employee_modify')}}" class="list-group-item">修改员工信息</a>
+                    {% endif %}
+                    {% if g.user_level == 'admin' %}
+                    <a href="{{ url_for('main.sql_query', query_id=0) }}" class="list-group-item">SQL查询</a>
+                    <span class="label" class="list-group-item">部门列表：</span>
+                    {% for department in g.department_list %}
+                    <a href="{{ url_for('main.department', department_id=department.id) }}" class="list-group-item">{{ department.name }}</a>
+                    {% endfor %}
+                    <a href="{{ url_for('main.add_department') }}" class="list-group-item">+</a>
+                    {% else %}
+                    <a href="{{ url_for('main.department', department_id=g.department_id) }}" class="list-group-item">部门信息</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
-    <div id="footer">
-        &copy; Copyright 2020 by ???.
-    </div>
+    <footer class="footer">
+        <div class="container">
+        <p class="text-muted"> &copy; Copyright 2020 by ???. </p>
+        </div>
+    </footer>
 </body>
 
 </html>

@@ -92,7 +92,10 @@ def get_id_and_password(cursor, username):
                 where Username = \'""" + username + "\'"
     cursor.execute(sql)
     result = cursor.fetchall()
-    return result[0][0], result[0][1]
+    if len(result):
+        return result[0][0], result[0][1]
+    else:
+        return None, None
     # return (0, "")
 
 

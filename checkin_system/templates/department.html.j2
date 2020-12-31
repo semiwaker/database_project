@@ -6,40 +6,50 @@
 
 {% block content %}
 <form method="post">
-<label> 部门编号 {{ g.deparment_id }} </label>
-<label> 部门名称 </label>
-{% if g.user_level == "admin" %}
-<input type="text" name="department_name" value="g.department_name" requied />
-{% else %}
-<input type="text" name="department_name" value="g.department_name" disabled />
-{% endif %}
-<br />
-<label> 部门经理 </label>
-{% if g.user_level == "admin" %}
-<select name="manager" requied>
-{% else %}
-<select name="manager" disabled>
-{% endif %}
-{% for manager in g.manager_list %}
-    {% if g.department_manager_id == manager.id %}
-    <option value="{{ manager.id }}" selected> {{ manager.name }} </option>
+<div class="form-group">
+    <label> 部门编号 </label>
+    <p class="form-control-static"> {{ g.department_id }}</p>
+</div>
+<div class="form-group">
+    <label> 部门名称 </label>
+    {% if g.user_level == "admin" %}
+    <input type="text" name="department_name" value="{{ g.department_name }}" class="form-control" requied />
     {% else %}
-    <option value="{{ manager.id }}"> {{ manager.name }} </option>
+    <input type="text" name="department_name" value="{{ g.department_name }}" class="form-control" disabled />
     {% endif %}
-{% endfor %}
-</select>
-<br />
-<textarea name="description" required>
-{{ g.department_description }}
-</textarea>
+</div>
+<div class="form-group">
+    <label> 部门经理 </label>
+    {% if g.user_level == "admin" %}
+    <select name="manager" class="form-control" requied>
+    {% else %}
+    <select name="manager" class="form-control" disabled>
+    {% endif %}
+    {% for manager in g.manager_list %}
+        {% if g.department_manager_id == manager.id %}
+        <option value="{{ manager.id }}" selected> {{ manager.name }} </option>
+        {% else %}
+        <option value="{{ manager.id }}"> {{ manager.name }} </option>
+        {% endif %}
+    {% endfor %}
+    </select>
+</div>
+<div class="form-group" >
+    <label>部门描述</label>
+    <textarea name="description" class="form-control" required>
+    {{ g.department_description }}
+    </textarea>
+</div>
 
-<br />
-<input type="submit" value="修改"/>
+<div class="col-sm-1">
+    <button type="submit" class="btn btn-primary">修改</button>
+</div>
+<div class="col-sm-1">
+<a href="{{ url_for('main.remove_department', department_id=g.department_id) }}" class="btn btn-danger"> 删除部门 </a>
+</div>
 {% if msg %}
-<p><span class="warning">{{ msg }}</span></p>
+<div class="alert alert-danger">{{ msg }}</div>
 {% endif %}
 </form>
-<p>
-<a href="{{ url_for('main.remove_department', department_id=g.department_id) }}"> 删除部门 </a>
-</p>
+<br/>
 {% endblock %}
