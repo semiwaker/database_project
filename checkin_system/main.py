@@ -38,6 +38,8 @@ def check_in():
 
     cursor = db.get_db().cursor()
     db.check_in(cursor, g.user_id, in_time, late)
+    return redirect(url_for('main.success'))
+
 
 
 @bp.route('/check_out')
@@ -51,6 +53,7 @@ def check_out():
 
     cursor = db.get_db().cursor()
     db.check_out(cursor, g.user_id, out_time, early)
+    return redirect(url_for('main.success'))
 
 
 @bp.route('/leave', methods=['GET', 'POST'])
