@@ -60,8 +60,8 @@ sql = """create table PAYROLL (
         SalaryNo int,
         EmployeeID int,
         BasicSalary int not null,
-        CorrespondingTime date not null,
-        PayTime timestamp(0) not null ,
+        CorrespondingTime char(10) not null ,
+        PayTime timestamp(0),
         VerifierID int,
         WorkTime int,
         Deduction int not null default 0,
@@ -124,6 +124,7 @@ last_name = ['Adams', 'Anderson', 'Arnold', 'Bell', 'Carter', 'Charles', 'David'
              #, 'Edward', 'Gary', 'George',
              #'Harris', 'Jaskson', 'James', 'Peter', 'Smith', 'Walker', 'Williams', 'Rose', 'Oliver', 'Leonard', 'Keith', 'Eddie']
 n = len(first_name)*len(last_name)
+# n = 10
 D = 5
 D_name = ['A01', 'A02', 'B01', 'B02', 'S']
 Employee = [[
@@ -192,6 +193,7 @@ cursor.execute(sql)
 # 生成请假与考勤记录,先跑起来，之后再改
 L=0
 A=0
+Ded = np.zeros((n, 13))
 for eid in range(1, n+1):
     print(eid)
     if Employee[eid-1][10] == 'employee':
@@ -245,11 +247,13 @@ for eid in range(1, n+1):
             if random.random() < late_P:
                 lateornot = True
                 missing += 1
+                Ded[eid-1][d.month] += 100
             else:
                 lateornot = False
             if random.random() < late_P:
                 leaveearlyornot = True
                 missing += 1
+                Ded[eid-1][d.month] += 100
             else:
                 leaveearlyornot = False
             A += 1
@@ -266,9 +270,37 @@ for eid in range(1, n+1):
         d += delta
         d += delta
 
+S = 0
+for eid in range(1, n+1):
+    if eid == Admin:
+        continue
+    if Employee[eid - 1][10] == 'employee':
+        basic = 8000
+        verifier = M[Employee[eid - 1][11] - 1]
+    else:
+        basic = 20000
+        verifier = Admin
+    worktime = 2021 - int(Employee[eid - 1][4][0:4])
+    for month in range(1,13):
+        cor = "2020-"+str(month).zfill(2)
+        paytime = datetime.datetime(
+            2021 if month==12 else 2020,
+            1 if month==12 else month+1,
+            random.randint(1,5),0,0,0).strftime("%Y-%m-%d %H:%M:%S")
+        deduction = Ded[eid-1][month]
+        real = basic - deduction
+        S += 1
+        item = [S, eid, basic, cor, paytime, verifier, worktime, deduction, real]
+        sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary,
+         CorrespondingTime, PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
+         VALUES '''+str(tuple(item))
+        cursor.execute(sql)
+        db.commit()
+
+
 sql = """insert into test.METADATA
         (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
-        values """+str((n,D,0,L,A))
+        values """+str((n,D,S,L,A))
 cursor.execute(sql)
 db.commit()
 
