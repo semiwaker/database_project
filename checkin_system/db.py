@@ -62,7 +62,8 @@ def get_user_data(cursor, user_id):
     sql = """select *
     from test.attendences
     where EmployeeID = """+str(user_id)+"""
-    and Date = """+today
+    and Date = \'"""+today+'\''
+
     cursor.execute(sql)
     results = cursor.fetchall()
     if len(results) > 0:
@@ -432,8 +433,8 @@ def update_employee_info(cursor, data):
     if 'level' in data:
         sql = '''update test.employee
         set Name = \'''' + data['name'] + '''\',
-        Gender = \' ''' + data['gender'] + '''\',
-        Birthdate = \'''' + data['birthdate'] + '''\',
+        Gender = \'''' + data['gender'] + '''\',
+        Birthdate = \'''' + data['birthdate'].strptime('%Y-%m-%d') + '''\',
         Department_ID = ''' + data['department_id'] + ''',
         E_mail = \'''' + data['email'] + '''\',
         Phone_number = \'''' + data['phone_number'] + '''\',
@@ -447,6 +448,7 @@ def update_employee_info(cursor, data):
         Phone_number = \'''' + data['phone_number'] + '''\',
         Password = \'''' + data['password'] + '''\'
         where EmployeeID = ''' + str(data['user_id'])
+    print(sql)
     cursor.execute(sql)
     g.db.commit()
 
@@ -494,10 +496,11 @@ def check_in(cursor, user_id, in_time, late):
 
 def check_out(cursor, user_id, out_time, early):
     sql = '''update test.attendences
-    set LeaveTime = '''+out_time.strftime("%H:%M:%S")+''',
+    set LeaveTime = \''''+out_time.strftime("%H:%M:%S")+'''\',
     LeaveEarlyornot = '''+str(early > 0)+''',
     TimeMissing = TimeMissing +'''+str(early)+'''
-    where Date = ''' + out_time.strftime("%Y-%m-%d")
+    where Date = \'''' + out_time.strftime("%Y-%m-%d")+'\''
+    print(sql)
     cursor.execute(sql)
     g.db.commit()
 
