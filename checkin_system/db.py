@@ -58,9 +58,17 @@ def get_user_data(cursor, user_id):
     where EmployeeID = """+str(user_id)
     cursor.execute(sql)
     ret_dict = __getResult(cursor)[0]
-    today = datetime.date.today()
-    # TODO: 查询今天是否签到过
-    ret_dict["work_status"] = "in"
+    today = datetime.date.today().strftime('%Y-%m-%d')
+    sql = """select *
+    from test.attendences
+    where EmployeeID = """+str(user_id)+"""
+    and Date = """+today
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    if len(results) > 0:
+        ret_dict["work_status"] = "in"
+    else:
+        ret_dict["work_status"] = "out"
     return ret_dict
     # return {
     #     "username": None,
@@ -501,12 +509,29 @@ def delete_department(cursor, department_id):
     g.db.commit()
 
 def delete_user(cursor, user_id):
-    pass
+    sql = '''delete from test.attendences
+                where EmployeeID = ''' + str(user_id)
+    cursor.execute(sql)
+    g.db.commit()
+    sql = '''delete from test.leaves
+                where EmployeeID = ''' + str(user_id)
+    cursor.execute(sql)
+    g.db.commit()
+    sql = '''delete from test.payroll
+                where EmployeeID = ''' + str(user_id)
+    cursor.execute(sql)
+    g.db.commit()
+    sql = '''delete from test.employee
+            where EmployeeID = ''' + str(user_id)
+    cursor.execute(sql)
+    g.db.commit()
+
 
 def clear_reminder(cursor, user_id):
     pass
 
 
+# Query 1
 def Query_leaveandlate_202001(cursor, topnum=10):
     sql = """with E_leaves(EmployeeID, tot_leaves) as
         (select EmployeeID, sum(Duration)
@@ -527,8 +552,6 @@ def Query_leaveandlate_202001(cursor, topnum=10):
     return __getResult(cursor)
 
 # Query 2.1
-
-
 def Query_MaxVerifier_leaves(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
@@ -548,8 +571,6 @@ def Query_MaxVerifier_leaves(cursor):
     return __getResult(cursor)
 
 # Query 2.2
-
-
 def Query_MaxVerifier_lates(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
@@ -569,15 +590,23 @@ def Query_MaxVerifier_lates(cursor):
     return __getResult(cursor)
 
 # Query 3
+def Query_HugeDeduction(cursor, year=2020, month=12, D_id = 1):
+    sql = """with cur(eid, Deduction, RealSalary) as
+        (select EmployeeID, Deduction, RealSalary
+        from test.payroll
+        where CorrespondingTime = \'"""+'-'.join([str(year),str(month).zfill(2)])+"""\')
+    
+    select employee.EmployeeID, Name, Deduction
+    from cur, test.employee
+    where eid = employee.EmployeeID
+    and Department_ID = """+str(D_id)+"""
+    and Deduction >= (select avg(RealSalary) from cur)
+    order by Deduction desc"""
+    cursor.execute(sql)
+    return __getResult(cursor)
 
-
-def Query_HugeDeduction(cursor, A):
-    # 工资发好几次，罚金也罚好几次，这平均是什么范围内啊?
-    pass
 
 # Query 4
-
-
 def Query_MaxRealSalary_2020(cursor):
     sql = """with tmp(Name, CorrespondingTime, RealSalary) as
             (select Name, CorrespondingTime, RealSalary
@@ -601,8 +630,6 @@ def Query_MaxRealSalary_2020(cursor):
     return __getResult(cursor)
 
 # Query 5
-
-
 def Query_HugeLatingDuration(cursor):
     # 为了方便，要不把跨月份的请假拆成两次请假事件吧
     sql = """select Name, t1.Department_ID, LatesDuration
@@ -627,8 +654,6 @@ def Query_HugeLatingDuration(cursor):
     return __getResult(cursor)
 
 # Query 6
-
-
 def Query_OverruledManyTimes(cursor):
     sql = """with GGperson(EmployeeID, Latetimes, Leavetimes, month) as
             (select t1.EmployeeID, Latetimes, Leavetimes, t1.month
@@ -676,11 +701,12 @@ if __name__ == "__main__":
     # t4 = Query_MaxRealSalary_2020(cursor)
     # t5 = Query_HugeLatingDuration(cursor)
     # t6 = Query_OverruledManyTimes(cursor)
-    a = get_reachable_user_ids(cursor, 21)
-    a = get_superior(cursor, 34)
+    # a = get_reachable_user_ids(cursor, 21)
+    # a = get_superior(cursor, 34)
     # a = new_employee_id(cursor)
     # a = new_department_id(cursor)
     # delete_department(cursor, 5)
+    a = Query_HugeDeduction(cursor)
     print(a)
     db.close()
     # close_db(db)
