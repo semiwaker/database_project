@@ -121,7 +121,6 @@ def get_department_and_level(cursor, user_id):
 
 def get_reachable_user_ids(cursor, user_id):
     # 查询所有下属用户id，包括自己
-    # (nkc)这里如果要求只用一句SQL语言倒也不是不可以，是我后来此想到的所以先这么写了，不行再改
     department, level = get_department_and_level(cursor, user_id)
     if level == 'employee':
         return [user_id]
@@ -199,16 +198,50 @@ def get_leave_list(cursor, user_id):
 
 
 def get_salary_list(cursor, user_id):
-    # 查询user_id所有下属的工资情况，每一个一个元组。
-    # 每一个员工应该有一个与月份无关的基本工资和这个月的deduction
     # 这个月的deduction要不就按一次迟到早退扣100，缺勤扣200算好了……
+    # 算工作日太麻烦，我直接按每个月出勤20天，多了不补少了扣钱算的
     # 假定一个月最后一天发工资
-    # TODO
     today = datetime.date.today()
-    last_salary_no = 0  # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
-    return ([
-        ()  # departmentID,basicSalary,deduction,realSalary
-    ], last_salary_no)
+    month_str = today.strftime('%Y-%m')
+    reachable_L = get_reachable_user_ids(cursor, user_id)
+    ret_L = []
+    for reachable_id in reachable_L:
+        if reachable_id == user_id:
+            continue
+        sql = '''select Department_ID, Level
+        from test.employee
+        where EmployeeID = '''+str(reachable_id)
+        cursor.execute(sql)
+        result = cursor.fetchall()[0]
+        departmentID, level = result[0], result[1]
+        if level == 'manager':
+            basicSalary = 20000
+        elif level == 'employee':
+            basicSalary = 8000
+        sql = '''select count(Lateornot)+count(LeaveEarlyornot), count(*)
+        from test.attendences
+        where Date like \''''+month_str+'''%\'
+        and EmployeeID = '''+str(reachable_id)
+        cursor.execute(sql)
+        result = cursor.fetchall()[0]
+        deduction_times, attendence_times = result[0], result[1]
+        sql = '''select ifnull(sum(Duration), 0) 
+        from test.leaves
+        where ApplyStatus = 'accepted'
+        and YEAR(LeaveBegin) = '''+today.strftime('%Y')+'''
+        and MONTH(LeaveBegin) = '''+today.strftime('%m')+'''
+        and EmployeeID = '''+str(reachable_id)
+        cursor.execute(sql)
+        leave_days = int(cursor.fetchall()[0][0])
+        deduction = deduction_times*100+(20-leave_days-attendence_times)*200
+        ret_L.append((departmentID, basicSalary, deduction, basicSalary-deduction))
+    sql = '''select LastSalaryNo from test.metadata'''
+    cursor.execute(sql)
+    last_salary_no = cursor.fetchall()[0][0]  # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
+    return (ret_L, last_salary_no)
+    # [
+    # () departmentID,basicSalary,deduction,realSalary
+    # ]
 
 
 def get_department_info(cursor, department_id):
@@ -255,20 +288,19 @@ def check_reviewable(cursor, user_id, leave_no):
 
 
 def check_dispensable(cursor, user_id, salary_nos):
-    # (nkc)等确定了薪水发放规则之后写
+    # (nkc)这个函数的意义是什么?我看main里的逻辑，只要进到这个判断都应该能发放?
     # salary_nos is []
     return True
 
 
-def check_department_updatable(cursor, user_id, deparment_id):
-    deparment, level = get_department_and_level(cursor, user_id)
-    if level == 'admin' or (level == 'manager' and deparment == deparment_id):
+def check_department_updatable(cursor, user_id, department_id):
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'admin' or (level == 'manager' and department == int(department_id)):
         return True
     return False
 
 
 def accept_leave(cursor, leave_no):
-    # (nkc)还未验证正确性
     sql = '''update test.leaves
     set ApplyStatus = 'accepted'
     where LeaveNo = ''' + str(leave_no)
@@ -277,7 +309,6 @@ def accept_leave(cursor, leave_no):
 
 
 def reject_leave(cursor, leave_no):
-    # (nkc)还未验证正确性
     sql = '''update test.leaves
         set ApplyStatus = 'rejected'
         where LeaveNo = ''' + str(leave_no)
@@ -286,13 +317,12 @@ def reject_leave(cursor, leave_no):
 
 
 def new_employee_id(cursor):
-    # 无法更新
     sql = '''select LastEmployeeNo + 1
     from test.metadata '''
     cursor.execute(sql)
     result = cursor.fetchall()
     sql = '''update test.metadata
-        set LastDepartmentNo = LastDepartmentNo + 1'''
+        set LastEmployeeNo = LastEmployeeNo + 1'''
     cursor.execute(sql)
     g.db.commit()
     return result[0][0]
@@ -367,9 +397,10 @@ def add_new_leave(cursor, data):
     # }
 
     # (nkc)还未验证正确性
+    # TODO 需要把跨月份的拆成两次
     not_private = ['因公']
     duration = (datetime.datetime.strptime(data['leave_end'], '%Y-%m-%d') -
-                datetime.datetime.strptime(data['leave_begin'], '%Y-%m-%d')).days
+                datetime.datetime.strptime(data['leave_begin'], '%Y-%m-%d')).days + 1
     tmp = (data['user_id'],
            data['leave_no'],
            data['leave_begin'],
@@ -390,9 +421,14 @@ def add_new_leave(cursor, data):
 
 
 def add_new_salary(cursor, data):
+    # (nkc) data里还需要一些东西，标在下面了
+
     # data = [
     #     {
     #         "workTime": ,
+    #         "employee_id": ,  工资单所有者的id
+    #         "CorrespondingTime": , 这个工资单对应的年月，可以以任何方便的形式给出，我来转成类似str(2020-01)的格式
+    #         "payTime": ,  发放工资的时刻（精确到秒），可以直接用点下按钮的时间戳？
     #         "salaryNo": ,
     #         "basicSalary": ,
     #         "deduction": ,
@@ -401,8 +437,25 @@ def add_new_salary(cursor, data):
     #     } for salaryNo in g.salaryNos
     # ]
     # 记得更改最后的salayNo
-    pass
-    # salary相关的我都放最后写
+
+    #(nkc) 还未测试其正确性
+    sql = '''select LastSalaryNo from test.metadata'''
+    cursor.execute(sql)
+    salayNo = cursor.fetchall()[0][0]
+    for D in data:
+        item = (D['salaryNo'], D['employee_id'], D['basicSalary'],
+                D['CorrespondingTime'], D['payTime'], D['verifier'],
+                D['workTime'], D['deduction'], D['realSalary'])
+        sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary, 
+        CorrespondingTime, PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
+        VALUES '''+str(tuple(item))
+        cursor.execute(sql)
+        g.db.commit()
+        salayNo = max(salayNo, D['salaryNo'])
+    sql = '''update test.metadata
+    set LastSalaryNo = '''+str(salayNo)
+    cursor.execute(sql)
+    g.db.commit()
 
 
 def update_employee_info(cursor, data):
@@ -429,7 +482,6 @@ def update_employee_info(cursor, data):
     #     "level":
     # }
 
-    # (nkc)还未验证正确性
     if 'level' in data:
         sql = '''update test.employee
         set Name = \'''' + data['name'] + '''\',
@@ -442,13 +494,11 @@ def update_employee_info(cursor, data):
         Level = \'''' + data['level'] + '''\'
         where EmployeeID = ''' + str(data['user_id'])
     else:
-        print(data['email'])
         sql = '''update test.employee
         set E_mail = \'''' + data['email'] + '''\',
         Phone_number = \'''' + data['phone_number'] + '''\',
         Password = \'''' + data['password'] + '''\'
         where EmployeeID = ''' + str(data['user_id'])
-    print(sql)
     cursor.execute(sql)
     g.db.commit()
 
@@ -463,16 +513,15 @@ def update_department_info(cursor, data):
 
     # (nkc)此处是否需要更新这个人的level?
     sql = '''update test.department
-            set Department = ''' + data['name'] + ''',
+            set Department = \'''' + data['name'] + '''\',
             Manager_ID = ''' + data['manager'] + ''',
-            info = ''' + data['description'] + '''
+            info = \'''' + data['description'] + '''\'
             where Department_ID = ''' + str(data['department_id'])
     cursor.execute(sql)
     g.db.commit()
 
 
 def check_in(cursor, user_id, in_time, late):
-    # 缺席怎么办？
     sql = '''select LastAttendenceNo + 1
         from test.metadata '''
     cursor.execute(sql)
@@ -500,7 +549,6 @@ def check_out(cursor, user_id, out_time, early):
     LeaveEarlyornot = '''+str(early > 0)+''',
     TimeMissing = TimeMissing +'''+str(early)+'''
     where Date = \'''' + out_time.strftime("%Y-%m-%d")+'\''
-    print(sql)
     cursor.execute(sql)
     g.db.commit()
 
@@ -639,11 +687,9 @@ def Query_MaxRealSalary_2020(cursor):
     cursor.execute(sql)
     return __getResult(cursor)
 
+
 # Query 5
-
-
 def Query_HugeLatingDuration(cursor):
-    # 为了方便，要不把跨月份的请假拆成两次请假事件吧
     sql = """select Name, t1.Department_ID, LatesDuration
     from(select Department_ID, avg(LeaveDuration) * 24 as AVG_leaveDuration, month
         from (select employee.EmployeeID, Department_ID,
@@ -665,9 +711,8 @@ def Query_HugeLatingDuration(cursor):
     cursor.execute(sql)
     return __getResult(cursor)
 
+
 # Query 6
-
-
 def Query_OverruledManyTimes(cursor):
     sql = """with GGperson(EmployeeID, Latetimes, Leavetimes, month) as
             (select t1.EmployeeID, Latetimes, Leavetimes, t1.month

@@ -233,6 +233,7 @@ def employee_modify(user_id):
 @bp.route('/employee_modify/update/<user_id>', methods=['POST'])
 @login_required
 def employee_delete(user_id):
+    # (nkc) 为什么点删除员工没进到这个函数...
     cursor = db.get_db().cursor()
     g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
     if int(user_id) not in g.reachable_user_ids:
@@ -256,6 +257,7 @@ def department(department_id):
         if not db.check_department_updatable(cursor, g.user_id, department_id):
             msg = Markup("权限不足，无法修改部门信息！")
         else:
+            # TODO 应该和员工那个禁用的输入框问题一样
             data = {
                 "department_id": department_id,
                 "name": request.form["department_name"],
