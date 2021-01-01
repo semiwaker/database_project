@@ -105,6 +105,14 @@
     </select>
 </div>
 
+{% if msg %}
+    {% if succeed %}
+        <div class="alert alert-success" role="alert">{{ msg }}</div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">{{ msg }}</div>
+    {% endif %}
+{% endif %}
+
 <div class="col-sm-1">
 <button type="submit" class="btn btn-primary">修改</button>
 </div>
@@ -116,11 +124,4 @@
 </div>
 {% endif %}
 </form>
-{% if msg %}
-    {% if succeed %}
-        <div class="alert alert-success" role="alert">{{ msg }}</div>
-    {% else %}
-        <div class="alert alert-danger" role="alert">{{ msg }}</div>
-    {% endif %}
-{% endif %}
 {% endblock %}

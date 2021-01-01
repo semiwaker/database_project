@@ -75,14 +75,6 @@ def load_logged_in_user():
         g.user_level = data["level"]
         g.department_id = data["department_id"]
         g.work_status = data["work_status"]
-        g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
-        g.reachable_users = []
-        for user_id in g.reachable_user_ids:
-            data = db.get_user_data(cursor, user_id)
-            g.reachable_users += {
-                "user_id": user_id,
-                'name': data["name"]
-            }
         if g.user_level != "employee":
             g.reminder_num = len(db.get_reminders(cursor, g.user_id))
             g.leave_num = len(db.get_leave_list(cursor, g.user_id))

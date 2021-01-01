@@ -434,8 +434,8 @@ def update_employee_info(cursor, data):
         sql = '''update test.employee
         set Name = \'''' + data['name'] + '''\',
         Gender = \'''' + data['gender'] + '''\',
-        Birthdate = \'''' + data['birthdate'].strptime('%Y-%m-%d') + '''\',
-        Department_ID = ''' + data['department_id'] + ''',
+        Birthdate = \'''' + data['birthdate'] + '''\',
+        Department_ID = ''' + str(data['department_id']) + ''',
         E_mail = \'''' + data['email'] + '''\',
         Phone_number = \'''' + data['phone_number'] + '''\',
         ID_number = \'''' + data['id_number'] + '''\',
@@ -511,6 +511,7 @@ def delete_department(cursor, department_id):
     cursor.execute(sql)
     g.db.commit()
 
+
 def delete_user(cursor, user_id):
     sql = '''delete from test.attendences
                 where EmployeeID = ''' + str(user_id)
@@ -555,6 +556,8 @@ def Query_leaveandlate_202001(cursor, topnum=10):
     return __getResult(cursor)
 
 # Query 2.1
+
+
 def Query_MaxVerifier_leaves(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
@@ -574,6 +577,8 @@ def Query_MaxVerifier_leaves(cursor):
     return __getResult(cursor)
 
 # Query 2.2
+
+
 def Query_MaxVerifier_lates(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
@@ -593,11 +598,13 @@ def Query_MaxVerifier_lates(cursor):
     return __getResult(cursor)
 
 # Query 3
-def Query_HugeDeduction(cursor, year=2020, month=12, D_id = 1):
+
+
+def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
     sql = """with cur(eid, Deduction, RealSalary) as
         (select EmployeeID, Deduction, RealSalary
         from test.payroll
-        where CorrespondingTime = \'"""+'-'.join([str(year),str(month).zfill(2)])+"""\')
+        where CorrespondingTime = \'"""+'-'.join([str(year), str(month).zfill(2)])+"""\')
     
     select employee.EmployeeID, Name, Deduction
     from cur, test.employee
@@ -633,6 +640,8 @@ def Query_MaxRealSalary_2020(cursor):
     return __getResult(cursor)
 
 # Query 5
+
+
 def Query_HugeLatingDuration(cursor):
     # 为了方便，要不把跨月份的请假拆成两次请假事件吧
     sql = """select Name, t1.Department_ID, LatesDuration
@@ -657,6 +666,8 @@ def Query_HugeLatingDuration(cursor):
     return __getResult(cursor)
 
 # Query 6
+
+
 def Query_OverruledManyTimes(cursor):
     sql = """with GGperson(EmployeeID, Latetimes, Leavetimes, month) as
             (select t1.EmployeeID, Latetimes, Leavetimes, t1.month

@@ -15,6 +15,16 @@ bp = Blueprint('main', __name__, url_prefix='/main')
 @login_required
 def home():
     cursor = db.get_db().cursor()
+
+    g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
+    g.reachable_users = []
+    for user_id in g.reachable_user_ids:
+        data = db.get_user_data(cursor, user_id)
+        g.reachable_users += {
+            "user_id": user_id,
+            'name': data["name"]
+        }
+
     return render_template('home.html.j2')
 
 
@@ -39,7 +49,6 @@ def check_in():
     cursor = db.get_db().cursor()
     db.check_in(cursor, g.user_id, in_time, late)
     return redirect(url_for('main.success'))
-
 
 
 @bp.route('/check_out')
@@ -190,17 +199,31 @@ def employee_modify(user_id):
         if int(user_id) not in g.reachable_user_ids:
             msg = Markup("权限不足，无法修改个人信息！")
         else:
-            data = {
-                "user_id": user_id,
-                "name": request.form['name'],
-                "gender": request.form['gender'],
-                "birthdate": request.form['birthday'],
-                "department_id": request.form['department'],
-                "email": request.form['email'],
-                "phone_number": request.form['phone'],
-                "id_number": request.form['id_number'],
-                "level": request.form["level"]
-            }
+            print(request.form)
+            if g.user_level == "admin":
+                data = {
+                    "user_id": user_id,
+                    "name": request.form['name'],
+                    "gender": request.form['gender'],
+                    "birthdate": request.form['birthday'],
+                    "department_id": request.form['department'],
+                    "email": request.form['email'],
+                    "phone_number": request.form['phone'],
+                    "id_number": request.form['id_number'],
+                    "level": request.form["level"]
+                }
+            else:
+                data = {
+                    "user_id": user_id,
+                    "name": request.form['name'],
+                    "gender": request.form['gender'],
+                    "birthdate": request.form['birthday'],
+                    "department_id": g.user_data['department'],
+                    "email": request.form['email'],
+                    "phone_number": request.form['phone'],
+                    "id_number": request.form['id_number'],
+                    "level": g.user_data["level"]
+                }
             db.update_employee_info(cursor, data)
             msg = Markup("修改成功")
             succeed = True
