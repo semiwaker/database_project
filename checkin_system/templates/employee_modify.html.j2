@@ -5,92 +5,122 @@
 {% endblock %}
 
 {% block content %}
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <p>
-        {% for message in messages %}
-            <span class="warning">{{ message }}</span>
-        {% endfor %}
-    </p>
-    {% endif %}
-{% endwith %}
-<table class="table-condensed">
-    <tr>
-        <th>员工编号</th>
-        <th>员工姓名</th>
-        <th>性别</th>
-        <th>出生日期</th>
-        <th>电子邮件</th>
-        <th>电话号码</th>
-        <th>身份证号</th>
-        <th>部门名称</th>
-        <th>员工等级</th>
-        <th></th>
-    </tr>
+<div class="dropdown">
+  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    {{ g.user_data.name }}
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
     {% for user in g.reachable_users %}
-    <tr>
-        <form action="{{ url_for('main.employee_modify_update', user_id=user.user_id) }}" method="POST">
-            <td>{{ user.user_id }} </td>
-            <td><input type="text" name="name" value="{{ user.name }}" class="form-control" /> </td>
-            <td>
-                <select name="gender" class="form-control">
-                {% if user.gender=="Male" %}
-                    <option value="Male" selected>男</option>
-                {% else %}
-                    <option value="Male">男</option>
-                {% endif %}
-                {% if user.gender=="Female" %}
-                    <option value="Female" selected>女</option>
-                {% else %}
-                    <option value="Female">女</option>
-                {% endif %}
-                </select>
-            </td>
-            <td><input type="date" name="birthday" value="{{ user.birthday }}" class="form-control" /> </td>
-            <td><input type="email" name="email" value="{{ user.email }}" class="form-control" /> </td>
-            <td><input type="text" name="phone" value="{{ user.phone }}" class="form-control" /> </td>
-            <td><input type="text" name="id_number" value="{{ user.id_number }}" class="form-control" /> </td>
-            <td>
-                {% if g.user_level=="admin" %}
-                <select name="department" class="form-control">
-                {% else %}
-                <select name="department" class="form-control" disabled>
-                {% endif %}
-                {% for department in g.department_list %}
-                    {% if user.department_id == department.id %}
-                    <option value="{{ department.id }}" selected> {{ department.name }} </option>
-                    {% else %}
-                    <option value="{{ department.id }}"> {{ department.name }} </option>
-                    {% endif %}
-                {% endfor %}
-                </select>
-            </td>
-            <td>
-                {% if g.user_level=="admin" %}
-                <select name="level" class="form-control">
-                {% else %}
-                <select name="level" class="form-control" disabled>
-                {% endif %}
-                {% if user.level == "employee" %}
-                <option value="employee" selected>员工</option>
-                {% else %}
-                <option value="employee">员工</option>
-                {% endif %}
-                {% if user.level == "manager" %}
-                <option value="manager" selected>经理</option>
-                {% else %}
-                <option value="manager">经理</option>
-                {% endif %}
-                {% if user.level == "admin" %}
-                <option value="admin" selected>管理员</option>
-                {% else %}
-                <option value="admin">管理员</option>
-                {% endif %}
-                </select>
-            </td>
-            <td><button type="submit" class="btn btn-primary">修改</button></td>
-        </form>
-    </tr>
+        <li><a href="{{ url_for('main.employee_modify', user_id=user.id) }}">{{ user.name }}</a></li>
     {% endfor %}
-</table>
-{% endblock%}
+  </ul>
+</div>
+<form method="POST">
+<div class="form-group">
+    <label>员工编号</label>
+    <input type="text" class="form-control" value="{{ g.user_data.user_id }}" disabled required/>
+</div>
+
+<div class="form-group">
+<label>员工姓名</label>
+<input type="text" name="name" value="{{ g.user_data.name }}" class="form-control" autofocus/> 
+</div>
+
+<div class="form-group">
+<label>性别  </label>
+    <select name="gender" class="form-control">
+    {% if g.user_data.gender=="Male" %}
+        <option value="Male" selected>男</option>
+    {% else %}
+        <option value="Male">男</option>
+    {% endif %}
+    {% if g.user_data.gender=="Female" %}
+        <option value="Female" selected>女</option>
+    {% else %}
+        <option value="Female">女</option>
+    {% endif %}
+    </select>
+</div>
+
+<div class="form-group">
+<label>出生日期</label>
+<input type="date" name="birthday" value="{{ g.user_data.birthday }}" class="form-control" /> 
+</div>
+
+<div class="form-group">
+<label>电子邮件</label>
+<input type="email" name="email" value="{{ g.user_data.email }}" class="form-control" />
+</div>
+
+<div class="form-group">
+<label>电话号码</label>
+<input type="text" name="phone" value="{{ g.user_data.phone }}" class="form-control" />
+</div>
+
+<div class="form-group">
+<label>身份证号</label>
+<input type="text" name="id_number" value="{{ g.user_data.id_number }}" class="form-control" />
+</div>
+
+<div class="form-group">
+<label>部门名称</label>
+    {% if g.user_level=="admin" %}
+    <select name="department" class="form-control">
+    {% else %}
+    <select name="department" class="form-control" disabled>
+    {% endif %}
+    {% for department in g.department_list %}
+        {% if g.user_data.department_id == department.id %}
+        <option value="{{ department.id }}" selected> {{ department.name }} </option>
+        {% else %}
+        <option value="{{ department.id }}"> {{ department.name }} </option>
+        {% endif %}
+    {% endfor %}
+    </select>
+</div>
+
+<div class="form-group">
+<label>员工等级</label>
+    {% if g.user_level=="admin" %}
+    <select name="level" class="form-control">
+    {% else %}
+    <select name="level" class="form-control" disabled>
+    {% endif %}
+    {% if g.user_data.level == "employee" %}
+    <option value="employee" selected>员工</option>
+    {% else %}
+    <option value="employee">员工</option>
+    {% endif %}
+    {% if g.user_data.level == "manager" %}
+    <option value="manager" selected>经理</option>
+    {% else %}
+    <option value="manager">经理</option>
+    {% endif %}
+    {% if g.user_data.level == "admin" %}
+    <option value="admin" selected>管理员</option>
+    {% else %}
+    <option value="admin">管理员</option>
+    {% endif %}
+    </select>
+</div>
+
+<div class="col-sm-1">
+<button type="submit" class="btn btn-primary">修改</button>
+</div>
+{% if g.user_data.user_id != g.user_id %}
+<div class="col-sm-1">
+<form action="{{ url_for('main.employee_delete', user_id=g.user_data.user_id) }}" method="post">
+<button type="submit" class="btn btn-danger">删除员工</button>
+</form>
+</div>
+{% endif %}
+</form>
+{% if msg %}
+    {% if succeed %}
+        <div class="alert alert-success" role="alert">{{ msg }}</div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">{{ msg }}</div>
+    {% endif %}
+{% endif %}
+{% endblock %}

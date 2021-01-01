@@ -156,49 +156,63 @@ def info_update():
     return render_template('info_update.html.j2', msg=msg)
 
 
-@bp.route('/employee_modify', methods=['GET'])
+@bp.route('/employee_modify/<user_id>', methods=['GET', 'POST'])
 @login_required
-def employee_modify():
+def employee_modify(user_id):
     cursor = db.get_db().cursor()
     g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
-    g.reachable_users = []
+    g.reachable_users = [
+        {
+            "id": i,
+            "name": db.get_user_data(cursor, i)['name']
+        }
+        for i in g.reachable_user_ids
+    ]
     g.department_list = db.get_department_list(cursor)
-    for user_id in g.reachable_user_ids:
-        data = db.get_user_data(cursor, user_id)
-        g.reachable_users += [{
-            "user_id": user_id,
-            "name": data['name'],
-            "gender": data['gender'],
-            "birthday": data['birthdate'],
-            "department": data['department_id'],
-            "email": data['email'],
-            "phone": data['phone_number'],
-            "id_number": data['id_number'],
-            "level": data["level"]
-        }]
-    return render_template('employee_modify.html.j2')
+    data = db.get_user_data(cursor, user_id)
+    g.user_data = {
+        "user_id": user_id,
+        "name": data['name'],
+        "gender": data['gender'],
+        "birthday": data['birthdate'],
+        "department": data['department_id'],
+        "email": data['email'],
+        "phone": data['phone_number'],
+        "id_number": data['id_number'],
+        "level": data["level"]
+    }
+    msg = None
+    succeed = False
+    if request.method == "POST":
+        if int(user_id) not in g.reachable_user_ids:
+            msg = Markup("权限不足，无法修改个人信息！")
+        else:
+            data = {
+                "user_id": user_id,
+                "name": request.form['name'],
+                "gender": request.form['gender'],
+                "birthdate": request.form['birthday'],
+                "department_id": request.form['department'],
+                "email": request.form['email'],
+                "phone_number": request.form['phone'],
+                "id_number": request.form['id_number'],
+                "level": request.form["level"]
+            }
+            db.update_employee_info(cursor, data)
+            msg = Markup("修改成功")
+            succeed = True
+    return render_template('employee_modify.html.j2', msg=msg, succeed=True)
 
 
 @bp.route('/employee_modify/update/<user_id>', methods=['POST'])
 @login_required
-def employee_modify_update(user_id):
+def employee_delete(user_id):
     cursor = db.get_db().cursor()
-    if int(user_id) not in db.get_reachable_user_ids(cursor, g.user_id):
-        flash("权限不足，无法修改个人信息！")
-    else:
-        data = {
-            "user_id": user_id,
-            "name": request.form['name'],
-            "gender": request.form['gender'],
-            "birthdate": request.form['birthday'],
-            "department_id": request.form['department'],
-            "email": request.form['email'],
-            "phone_number": request.form['phone'],
-            "id_number": request.form['id_number'],
-            "level": request.form["level"]
-        }
-        db.update_employee_info(cursor, data)
-    return employee_modify()
+    g.reachable_user_ids = db.get_reachable_user_ids(cursor, g.user_id)
+    if int(user_id) not in g.reachable_user_ids:
+        return redirect(url_for('main.denied'))
+    db.delete_user(cursor, user_id)
+    return redirect(url_for('main.success'))
 
 
 @bp.route('/department/<department_id>', methods=['GET', 'POST'])

@@ -119,7 +119,9 @@ def get_reachable_user_ids(cursor, user_id):
     elif level == 'manager':
         sql = """select EmployeeID
             from test.employee
-            where Department_ID = """ + str(department)
+            where Department_ID = """ + str(department) + """
+            and Level != "admin"
+            """
         cursor.execute(sql)
         results = cursor.fetchall()
         return [item[0] for item in results]
@@ -498,6 +500,8 @@ def delete_department(cursor, department_id):
     cursor.execute(sql)
     g.db.commit()
 
+def delete_user(cursor, user_id):
+    pass
 
 def clear_reminder(cursor, user_id):
     pass
