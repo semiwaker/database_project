@@ -123,7 +123,7 @@ sql = """create table BADEVENTS (
         )"""
 cursor.execute(sql)
 
-sql = """create trigger LeaveAutoDetect AFTER INSERT
+sql = """create trigger LeaveAutoDetect AFTER UPDATE 
 ON test.leaves FOR EACH ROW
 BEGIN
     if (NEW.ApplyStatus = 'accepted' and NEW.Privateornot = TRUE)
