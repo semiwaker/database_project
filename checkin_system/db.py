@@ -306,11 +306,6 @@ def check_reviewable(cursor, user_id, leave_no):
     return True
 
 
-def check_dispensable(cursor, user_id, salary_nos):
-    # (nkc)这个函数的意义是什么?我看main里的逻辑，只要进到这个判断都应该能发放?
-    # salary_nos is []
-    return True
-
 
 def check_department_updatable(cursor, user_id, department_id):
     department, level = get_department_and_level(cursor, user_id)

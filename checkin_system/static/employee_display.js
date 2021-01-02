@@ -1,9 +1,9 @@
 function Lister(x) {
     const content = x.map((i) =>
-        <tr><td><b>{x[0]}：</b></td><td>{x[1]}</td></tr>
+        <tr><td><strong>{x[0]}</strong></td><td>{x[1]}</td></tr>
     );
     return (
-        <table>
+        <table class="table table-hover">
             {content}
         </table>
     );
@@ -18,7 +18,7 @@ function Tabler(tags, values) {
     const tag = tags.map((i) => <th>{i}</th>);
     const cont = values.map((i) => <TableRow row={i}></TableRow>);
     return (
-        <table border="1">
+        <table class="table table-hover">
             <tr>{tag}</tr>
             {cont}
         </table>
@@ -65,7 +65,7 @@ function Leaves(leaves) {
 function EmployeeDisplay(employee_id, xml_doc) {
     employee = xml_doc.documentElement.getElementsByTagName("Employee")[0];
     return (
-        <div>
+        <div class="panel panel-default">
             <hr />
             <p>员工编号： {employee.firstChild.nodeValue}</p>
             <BasicInfo basic_info={employee.getElementsByTagName("BasicInfo")[0]}></BasicInfo>
@@ -96,13 +96,13 @@ class EmployeeSelection extends React.Component {
                 ReactDOM.render(EmployeeDisplay(this.state.value, xhttp.responseXML), domContainer);
         };
 
-        this.xhttp.open('GET', 'employee_display.xml?user_id=' + this.state.value, true);
+        this.xhttp.open('GET', 'employee_display_' + this.state.value + '.xml?user_id=', true);
         this.xhttp.send();
     }
 
     handleChange(event) {
         this.setState({ value: event.target.value });
-        this.xhttp.open('GET', 'employee_display.xml?user_id=' + this.state.value, true);
+        this.xhttp.open('GET', 'employee_display_' + this.state.value + '.xml', true);
         this.xhttp.send();
     }
 
@@ -119,7 +119,7 @@ class EmployeeSelection extends React.Component {
         return (
             <form>
                 <label> 选择展示员工:
-                    <selection value={this.state.value} onChange={this.handleChange}>
+                    <selection value={this.state.value} onChange={this.handleChange} class="form-control">
                         {cont}
                     </selection>
                 </label>
@@ -133,7 +133,7 @@ var xhttp = new XMLHttpRequest();
 
 const domContainer = document.getElementById('employee_display');
 
-xhttp.open('GET', 'employee_display.xml?user_id=' + domContainer.employee_id, true);
+xhttp.open('GET', 'employee_display_' + domContainer.getAttribute("employee_id") + '.xml', true);
 
 xhttp.onreadystatechange = function () {
     if (xhttp.readyState == 4 && xhttp.status == 200)
@@ -143,4 +143,6 @@ xhttp.onreadystatechange = function () {
 xhttp.send();
 
 const selection = document.getElementById('employee_selection')
-ReactDom.render(<EmployeeSelection user_id={selection.user_id} users={selection.users} />, selection)
+const user_id = JSON.parse(selection.getAttribute("user_id"))
+const users = JSON.parse(selection.getAttribute('users').replace(/'/g, '"'))
+ReactDom.render(<EmployeeSelection user_id={user_id} users={selection.users} />, selection)

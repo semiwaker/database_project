@@ -5,12 +5,14 @@ import pymysql
 import datetime
 import os
 
+
 def get_password():
     if not os.path.exists("./db_password.txt"):
         return ""
     with open("./db_password.txt", "r") as file:
         db_password = file.read()
     return db_password
+
 
 password = get_password()
 
@@ -123,7 +125,7 @@ sql = """create table BADEVENTS (
         )"""
 cursor.execute(sql)
 
-sql = """create trigger LeaveAutoDetect AFTER UPDATE 
+sql = """create trigger LeaveAutoDetect AFTER UPDATE
 ON test.leaves FOR EACH ROW
 BEGIN
     if (NEW.ApplyStatus = 'accepted' and NEW.Privateornot = TRUE)
@@ -135,13 +137,13 @@ BEGIN
             and DATEDIFF(Date, NEW.LeaveBegin)>=-6 into @a;
         if @a > 3
             then
-            if (select count(*) from test.reminders 
+            if (select count(*) from test.reminders
                 where EmployeeID = NEW.EmployeeID) > 0
-                then 
+                then
                 UPDATE test.reminders
                 set Total = @a
                 where EmployeeID = NEW.EmployeeID;
-                else 
+                else
                 insert into test.reminders(EmployeeID, Total)
                 VALUES (NEW.EmployeeID, @a);
             end if;
@@ -162,13 +164,13 @@ BEGIN
             and DATEDIFF(Date, NEW.Date)>=-6 into @a;
         if @a > 3
             then
-            if (select count(*) from test.reminders 
+            if (select count(*) from test.reminders
                 where EmployeeID = NEW.EmployeeID) > 0
-                then 
+                then
                 UPDATE test.reminders
                 set Total = @a
                 where EmployeeID = NEW.EmployeeID;
-                else 
+                else
                 insert into test.reminders(EmployeeID, Total)
                 VALUES (NEW.EmployeeID, @a);
             end if;
@@ -178,11 +180,13 @@ end;"""
 cursor.execute(sql)
 
 # 数据生成部分
-first_name = ['Jacob', 'Emily', 'Michael', 'Hannah', 'Joshua', 'Madison', 'Matthew', 'Samantha']
-#, 'Andrew','Ashley', 'Joseph', 'Sarah', 'Nicholas', 'Elizabeth', 'Anthony', 'Kayla', 'Tyler', 'Alexis', 'Daniel', 'Abigail']
-last_name = ['Adams', 'Anderson', 'Arnold', 'Bell', 'Carter', 'Charles', 'David']
-             #, 'Edward', 'Gary', 'George',
-             #'Harris', 'Jaskson', 'James', 'Peter', 'Smith', 'Walker', 'Williams', 'Rose', 'Oliver', 'Leonard', 'Keith', 'Eddie']
+first_name = ['Jacob', 'Emily', 'Michael', 'Hannah',
+              'Joshua', 'Madison', 'Matthew', 'Samantha']
+# , 'Andrew','Ashley', 'Joseph', 'Sarah', 'Nicholas', 'Elizabeth', 'Anthony', 'Kayla', 'Tyler', 'Alexis', 'Daniel', 'Abigail']
+last_name = ['Adams', 'Anderson', 'Arnold',
+             'Bell', 'Carter', 'Charles', 'David']
+# , 'Edward', 'Gary', 'George',
+# 'Harris', 'Jaskson', 'James', 'Peter', 'Smith', 'Walker', 'Williams', 'Rose', 'Oliver', 'Leonard', 'Keith', 'Eddie']
 n = len(first_name)*len(last_name)
 # n = 10
 D = 5
@@ -213,36 +217,34 @@ for i in range(1, D+1):
     Employee[M[i-1]-1][10] = 'manager'
     Employee[M[i-1]-1][11] = i
 Employee[Admin-1][10] = 'admin'
-Employee[Admin-1].pop()
+# Employee[Admin-1].pop()
 # 数据插入部分
-for i in range(1,n+1):
-    if(i == Admin):
-        sql = '''INSERT INTO EMPLOYEE(EmployeeID, Name, BirthDate,
-        ID_number, EntryDate, Username, Password, Gender, Phone_number,
-        E_mail, Level) VALUES ''' + str(tuple(Employee[i-1]))
-    else:
-        sql = '''INSERT INTO EMPLOYEE(EmployeeID, Name, BirthDate,
-        ID_number, EntryDate, Username, Password, Gender, Phone_number,
-        E_mail, Level, Department_ID) VALUES '''+str(tuple(Employee[i-1]))
-    try:
-        cursor.execute(sql)
-        db.commit()
-    except:
-        db.rollback()
-        print("Insert Employee Error")
-        embed()
+employee_data = ",".join([str(tuple(Employee[i-1])) for i in range(1, n+1)])
+sql = '''INSERT INTO EMPLOYEE(EmployeeID, Name, BirthDate,
+    ID_number, EntryDate, Username, Password, Gender, Phone_number,
+    E_mail, Level, Department_ID) VALUES ''' + employee_data
+try:
+    cursor.execute(sql)
+    db.commit()
+except:
+    db.rollback()
+    print("Insert Employee Error")
+    embed()
 
+values = []
 for i in range(1, D+1):
     value = [i, D_name[i-1], M[i-1], "This is "+D_name[i-1]+'.']
-    sql = '''INSERT INTO DEPARTMENT(Department_ID, Department, Manager_ID,
-        info) VALUES ''' + str(tuple(value))
-    try:
-        cursor.execute(sql)
-        db.commit()
-    except:
-        db.rollback()
-        print("Insert Department Error")
-        embed()
+    values.append(str(tuple(value)))
+
+sql = '''INSERT INTO DEPARTMENT(Department_ID, Department, Manager_ID,
+    info) VALUES ''' + ",".join(values)
+try:
+    cursor.execute(sql)
+    db.commit()
+except:
+    db.rollback()
+    print("Insert Department Error")
+    embed()
 
 # 懒得写延迟检查了，直接把这个限制挪到了后面
 sql = """alter table EMPLOYEE add constraint C1
@@ -251,9 +253,12 @@ foreign key(Department_ID) references DEPARTMENT(Department_ID) on delete
 cursor.execute(sql)
 
 # 生成请假与考勤记录,先跑起来，之后再改
-L=0
-A=0
+L = 0
+A = 0
 Ded = np.zeros((n, 13))
+leave_values = []
+attend_values = []
+
 for eid in range(1, n+1):
     print(eid)
     if Employee[eid-1][10] == 'employee':
@@ -267,8 +272,8 @@ for eid in range(1, n+1):
     else:
         continue
 
-    begin = datetime.date(2020,1,6)
-    end = datetime.date(2020,12,25)
+    begin = datetime.date(2020, 1, 6)
+    end = datetime.date(2020, 12, 25)
     d = begin
     delta = datetime.timedelta(days=1)
     while d <= end:
@@ -293,14 +298,7 @@ for eid in range(1, n+1):
             item = [eid, L, s_day, e_day,
                     '胃疼' if private else '因公', private,
                     a_day, verifier, a_s, day]
-            sql = '''insert into test.leaves(EmployeeID, LeaveNo, LeaveBegin, 
-            LeaveEnd, LeaveReason, Privateornot, ApplyDay, 
-            ReviewerID, ApplyStatus, Duration) VALUES '''+str(tuple(item))
-            try:
-                cursor.execute(sql)
-                db.commit()
-            except:
-                embed()
+            leave_values.append(str(tuple(item)))
             if a_s == 'rejected':
                 day = 0
         for i in range(day):
@@ -324,18 +322,30 @@ for eid in range(1, n+1):
                     '09:01:00' if lateornot else '08:59:00',
                     '16:59:00' if leaveearlyornot else '17:01:00',
                     lateornot, leaveearlyornot, missing]
-            try:
-                sql = '''insert into test.attendences(EmployeeID, AttendenceNo,
-                Date, ArriveTime, LeaveTime, Lateornot, LeaveEarlyornot, TimeMissing) 
-                VALUES ''' + str(tuple(item))
-                cursor.execute(sql)
-                db.commit()
-            except:
-                embed()
+            attend_values.append(str(tuple(item)))
             d += delta
         d += delta
         d += delta
 
+sql = '''insert into test.leaves(EmployeeID, LeaveNo, LeaveBegin,
+LeaveEnd, LeaveReason, Privateornot, ApplyDay,
+ReviewerID, ApplyStatus, Duration) VALUES ''' + ",".join(leave_values)
+try:
+    cursor.execute(sql)
+    db.commit()
+except:
+    embed()
+
+try:
+    sql = '''insert into test.attendences(EmployeeID, AttendenceNo,
+    Date, ArriveTime, LeaveTime, Lateornot, LeaveEarlyornot, TimeMissing)
+    VALUES ''' + ",".join(attend_values)
+    cursor.execute(sql)
+    db.commit()
+except:
+    embed()
+
+payroll_values = []
 S = 0
 for eid in range(1, n+1):
     if eid == Admin:
@@ -347,25 +357,25 @@ for eid in range(1, n+1):
         basic = 8000
         verifier = Admin
     worktime = 2021 - int(Employee[eid - 1][4][0:4])
-    for month in range(1,13):
+    for month in range(1, 13):
         paytime = datetime.datetime(
-            2021 if month==12 else 2020,
-            1 if month==12 else month+1,
-            random.randint(1,5),0,0,0).strftime("%Y-%m-%d %H:%M:%S")
+            2021 if month == 12 else 2020,
+            1 if month == 12 else month+1,
+            random.randint(1, 5), 0, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
         deduction = Ded[eid-1][month]
         real = basic - deduction
         S += 1
         item = [S, eid, basic, paytime, verifier, worktime, deduction, real]
-        sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary,
-         PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
-         VALUES '''+str(tuple(item))
-        cursor.execute(sql)
-        db.commit()
+        payroll_values.append(str(tuple(item)))
 
-
-sql = """insert into test.METADATA
-        (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
-        values """+str((n,D,S,L,A))
+sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary,
+    PayTime, VerifierID, WorkTime, Deduction, RealSalary)
+    VALUES ''' + ",".join(payroll_values)
 cursor.execute(sql)
 db.commit()
 
+sql = """insert into test.METADATA
+        (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
+        values """+str((n, D, S, L, A))
+cursor.execute(sql)
+db.commit()

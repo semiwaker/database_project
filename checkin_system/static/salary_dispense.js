@@ -67,7 +67,7 @@ class SalaryDispense extends React.Component {
                             <td colSpan="4">
                                 <div class="form_group">
                                     <label>对应工作日期</label>
-                                    <input type="month" name="workTime" class="form-control" />
+                                    <input type="month" name="workTime" class="form-control" required/>
                                 </div>
                             </td>
                             <td ><button type="submit" class="btn btn-primary" >发放</button></td>

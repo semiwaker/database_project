@@ -44,7 +44,7 @@ def check_in():
     base = datetime.datetime.today()
     base = datetime.datetime(base.year, base.month, base.day, 9)
     # 我希望这里的late是一个数值类型用来记录迟到了多少分钟
-    late = (base - in_time).seconds // 60
+    late = (in_time - base).seconds // 60
 
     cursor = db.get_db().cursor()
     db.check_in(cursor, g.user_id, in_time, late)
@@ -58,7 +58,7 @@ def check_out():
     base = datetime.datetime.today()
     base = datetime.datetime(base.year, base.month, base.day, 17)
     # 我希望这里的early是一个数值类型用来记录早退了多少分钟
-    early = (out_time - base).seconds // 60
+    early = (base - out_time).seconds // 60
 
     cursor = db.get_db().cursor()
     db.check_out(cursor, g.user_id, out_time, early)
@@ -122,14 +122,14 @@ def salary_dispense():
     g.salaryNos = range(last_salary_no+1, last_salary_no + len(g.salary_list))
     g.salary_list = [[salaryNo, s[0], f"{s[1]}", s[2], s[3], s[4], s[5]]
                      for salaryNo, s in zip(g.salaryNos, g.salary_list)]
-    if not db.check_dispensable(cursor, g.user_id, g.salaryNos):
-        return redirect(url_for("main.denied"))
+    salaryNo2id = {s[0]: s[1]
+                   for s in g.salary_list}
 
     if request.method == 'POST':
         data = [
             {
-                'employee_id': None,
-                "CorrespondingTime": request.form["workTime"],
+                'employee_id': salaryNo2id[salaryNo],
+                "workTime": request.form["workTime"],
                 "payTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "salaryNo": salaryNo,
                 "basicSalary": request.form["basic"+str(salaryNo)],
@@ -232,7 +232,7 @@ def employee_modify(user_id):
     return render_template('employee_modify.html.j2', msg=msg, succeed=True)
 
 
-@bp.route('/employee_modify/update/<user_id>', methods=['POST'])
+@bp.route('/employee_modify/delete/<user_id>', methods=['POST'])
 @login_required
 def employee_delete(user_id):
     # (nkc) 为什么点删除员工没进到这个函数...

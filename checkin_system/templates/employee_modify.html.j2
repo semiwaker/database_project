@@ -71,7 +71,7 @@
     <select name="department" class="form-control" disabled>
     {% endif %}
     {% for department in g.department_list %}
-        {% if g.user_data.department_id == department.id %}
+        {% if g.user_data.department == department.id %}
         <option value="{{ department.id }}" selected> {{ department.name }} </option>
         {% else %}
         <option value="{{ department.id }}"> {{ department.name }} </option>
@@ -116,6 +116,7 @@
 <div class="col-sm-1">
 <button type="submit" class="btn btn-primary">修改</button>
 </div>
+</form>
 {% if g.user_data.user_id != g.user_id %}
 <div class="col-sm-1">
 <form action="{{ url_for('main.employee_delete', user_id=g.user_data.user_id) }}" method="post">
@@ -123,5 +124,4 @@
 </form>
 </div>
 {% endif %}
-</form>
 {% endblock %}

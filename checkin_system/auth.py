@@ -34,7 +34,7 @@ def register():
         session.clear()
         session["user_id"], _ = db.get_id_and_password(
             cursor, data["username"])
-        return redirect("main.success")
+        return redirect(url_for("main.success"))
 
     return render_template('auth/register.html.j2')
 
