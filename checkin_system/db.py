@@ -215,9 +215,9 @@ def get_salary_list(cursor, user_id):
         result = cursor.fetchall()[0]
         departmentID, level = result[0], result[1]
         if level == 'manager':
-            basicSalary = 20000
-        elif level == 'employee':
             basicSalary = 8000
+        elif level == 'employee':
+            basicSalary = 3000
         sql = '''select count(Lateornot)+count(LeaveEarlyornot), count(*)
         from test.attendences
         where Date like \''''+month_str+'''%\'
@@ -258,7 +258,20 @@ def get_department_info(cursor, department_id):
 
 
 def get_reminders(cursor, user_id):
-    return [{"name": None, "id": None}]
+    # (nkc)还未验证正确性
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'admin':
+        sql = '''select employee.EmployeeID as id, name, total
+        from test.reminders, test.employee
+        where employee.EmployeeID = reminders.EmployeeID'''
+    elif level == 'manager':
+        sql = '''select employee.EmployeeID as id, name, total
+            from test.reminders, test.employee
+            where employee.EmployeeID = reminders.EmployeeID
+            and Department_ID = '''+str(department)+'''
+            and employee.EmployeeID != '''+str(user_id)
+    cursor.execute(sql)
+    return __getResult(cursor)
 
 
 def get_employee_xml(cursor, user_id):
@@ -425,9 +438,8 @@ def add_new_salary(cursor, data):
 
     # data = [
     #     {
-    #         "workTime": ,
+    #         "workTime": ,  这个工资单对应的年月
     #         "employee_id": ,  工资单所有者的id
-    #         "CorrespondingTime": , 这个工资单对应的年月，可以以任何方便的形式给出，我来转成类似str(2020-01)的格式
     #         "payTime": ,  发放工资的时刻（精确到秒），可以直接用点下按钮的时间戳？
     #         "salaryNo": ,
     #         "basicSalary": ,
@@ -444,10 +456,10 @@ def add_new_salary(cursor, data):
     salayNo = cursor.fetchall()[0][0]
     for D in data:
         item = (D['salaryNo'], D['employee_id'], D['basicSalary'],
-                D['CorrespondingTime'], D['payTime'], D['verifier'],
+                D['payTime'], D['verifier'],
                 D['workTime'], D['deduction'], D['realSalary'])
         sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary, 
-        CorrespondingTime, PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
+                PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
         VALUES '''+str(tuple(item))
         cursor.execute(sql)
         g.db.commit()
@@ -580,7 +592,22 @@ def delete_user(cursor, user_id):
 
 
 def clear_reminder(cursor, user_id):
-    pass
+    # (nkc) 还未验证其正确性
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'admin':
+        sql = '''truncate table test.reminders'''
+    elif level == 'manager':
+        sql = '''delete
+            from test.reminders
+            where EmployeeID in (
+                select EmployeeID
+                from test.employee
+                where Department_ID = ''' + str(department) + '''
+                and employee.EmployeeID != ''' + str(user_id)+''')'''
+    else:
+        sql = ''''''
+    cursor.execute(sql)
+    g.db.commit()
 
 
 # Query 1
@@ -652,7 +679,7 @@ def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
     sql = """with cur(eid, Deduction, RealSalary) as
         (select EmployeeID, Deduction, RealSalary
         from test.payroll
-        where CorrespondingTime = \'"""+'-'.join([str(year), str(month).zfill(2)])+"""\')
+        where WorkTime = \'"""+'-'.join([str(year), str(month).zfill(2)])+"""\')
     
     select employee.EmployeeID, Name, Deduction
     from cur, test.employee
@@ -666,8 +693,8 @@ def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
 
 # Query 4
 def Query_MaxRealSalary_2020(cursor):
-    sql = """with tmp(Name, CorrespondingTime, RealSalary) as
-            (select Name, CorrespondingTime, RealSalary
+    sql = """with tmp(Name, WorkTime, RealSalary) as
+            (select Name, WorkTime, RealSalary
             from (select * from test.EMPLOYEE
            where Department_ID in
            (select Department_ID
@@ -675,14 +702,14 @@ def Query_MaxRealSalary_2020(cursor):
            group by Department_ID
            having count(EmployeeID)>=10)) as t inner join test.PAYROLL
             on t.EmployeeID = payroll.EmployeeID
-            where payroll.CorrespondingTime >= '2020-01-01'
-            and payroll.CorrespondingTime <= '2020-12-31')
+            where payroll.WorkTime >= '2020-01-01'
+            and payroll.WorkTime <= '2020-12-31')
 
-           select Name, tmp.CorrespondingTime, RealSalary from
-           (select CorrespondingTime, max(RealSalary) as maxsalary
+           select Name, tmp.WorkTime, RealSalary from
+           (select WorkTime, max(RealSalary) as maxsalary
            from tmp
-           group by CorrespondingTime) as t inner join tmp
-           where t.CorrespondingTime = tmp.CorrespondingTime
+           group by WorkTime) as t inner join tmp
+           where t.WorkTime = tmp.WorkTime
            and t.maxsalary = tmp.RealSalary"""
     cursor.execute(sql)
     return __getResult(cursor)

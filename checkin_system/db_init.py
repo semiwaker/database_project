@@ -60,10 +60,9 @@ sql = """create table PAYROLL (
         SalaryNo int,
         EmployeeID int,
         BasicSalary int not null,
-        CorrespondingTime char(10) not null ,
+        WorkTime char(10) not null ,
         PayTime timestamp(0),
         VerifierID int,
-        WorkTime int,
         Deduction int not null default 0,
         RealSalary int not null,
         primary key (SalaryNo),
@@ -115,6 +114,67 @@ sql = """create table METADATA (
         LastLeaveNo int not null,
         LastAttendenceNo int not null
         )"""
+cursor.execute(sql)
+
+sql = """create table BADEVENTS (
+        EmployeeID int not null,
+        Date Date not null,
+        primary key (EmployeeID, Date)
+        )"""
+cursor.execute(sql)
+
+sql = """create trigger LeaveAutoDetect AFTER INSERT
+ON test.leaves FOR EACH ROW
+BEGIN
+    if (NEW.ApplyStatus = 'accepted' and NEW.Privateornot = TRUE)
+        then
+        insert into test.badevents(EmployeeID, Date)
+        VALUES (NEW.EmployeeID, NEW.LeaveEnd);
+        select count(*) from test.badevents
+            where EmployeeID = NEW.EmployeeID
+            and DATEDIFF(Date, NEW.LeaveBegin)>=-6 into @a;
+        if @a > 3
+            then
+            if (select count(*) from test.reminders 
+                where EmployeeID = NEW.EmployeeID) > 0
+                then 
+                UPDATE test.reminders
+                set Total = @a
+                where EmployeeID = NEW.EmployeeID;
+                else 
+                insert into test.reminders(EmployeeID, Total)
+                VALUES (NEW.EmployeeID, @a);
+            end if;
+        end if;
+    end if;
+end;"""
+cursor.execute(sql)
+
+sql = """create trigger LateAutoDetect AFTER INSERT
+ON test.attendences FOR EACH ROW
+BEGIN
+    if (NEW.Lateornot = TRUE)
+        then
+        insert into test.badevents(EmployeeID, Date)
+        VALUES (NEW.EmployeeID, NEW.Date);
+        select count(*) from test.badevents
+            where EmployeeID = NEW.EmployeeID
+            and DATEDIFF(Date, NEW.Date)>=-6 into @a;
+        if @a > 3
+            then
+            if (select count(*) from test.reminders 
+                where EmployeeID = NEW.EmployeeID) > 0
+                then 
+                UPDATE test.reminders
+                set Total = @a
+                where EmployeeID = NEW.EmployeeID;
+                else 
+                insert into test.reminders(EmployeeID, Total)
+                VALUES (NEW.EmployeeID, @a);
+            end if;
+        end if;
+    end if;
+end;"""
 cursor.execute(sql)
 
 # 数据生成部分
@@ -225,7 +285,7 @@ for eid in range(1, n+1):
                 a_s = 'rejected'
             s_day = d.strftime("%Y-%m-%d")
             dd = d
-            for i in range(day):
+            for i in range(day-1):
                 dd += delta
             e_day = dd.strftime("%Y-%m-%d")
             a_day = (d-delta).strftime("%Y-%m-%d")
@@ -236,8 +296,11 @@ for eid in range(1, n+1):
             sql = '''insert into test.leaves(EmployeeID, LeaveNo, LeaveBegin, 
             LeaveEnd, LeaveReason, Privateornot, ApplyDay, 
             ReviewerID, ApplyStatus, Duration) VALUES '''+str(tuple(item))
-            cursor.execute(sql)
-            db.commit()
+            try:
+                cursor.execute(sql)
+                db.commit()
+            except:
+                embed()
             if a_s == 'rejected':
                 day = 0
         for i in range(day):
@@ -261,11 +324,14 @@ for eid in range(1, n+1):
                     '09:01:00' if lateornot else '08:59:00',
                     '16:59:00' if leaveearlyornot else '17:01:00',
                     lateornot, leaveearlyornot, missing]
-            sql = '''insert into test.attendences(EmployeeID, AttendenceNo,
-            Date, ArriveTime, LeaveTime, Lateornot, LeaveEarlyornot, TimeMissing) 
-            VALUES ''' + str(tuple(item))
-            cursor.execute(sql)
-            db.commit()
+            try:
+                sql = '''insert into test.attendences(EmployeeID, AttendenceNo,
+                Date, ArriveTime, LeaveTime, Lateornot, LeaveEarlyornot, TimeMissing) 
+                VALUES ''' + str(tuple(item))
+                cursor.execute(sql)
+                db.commit()
+            except:
+                embed()
             d += delta
         d += delta
         d += delta
@@ -275,14 +341,13 @@ for eid in range(1, n+1):
     if eid == Admin:
         continue
     if Employee[eid - 1][10] == 'employee':
-        basic = 8000
+        basic = 3000
         verifier = M[Employee[eid - 1][11] - 1]
     else:
-        basic = 20000
+        basic = 8000
         verifier = Admin
     worktime = 2021 - int(Employee[eid - 1][4][0:4])
     for month in range(1,13):
-        cor = "2020-"+str(month).zfill(2)
         paytime = datetime.datetime(
             2021 if month==12 else 2020,
             1 if month==12 else month+1,
@@ -290,9 +355,9 @@ for eid in range(1, n+1):
         deduction = Ded[eid-1][month]
         real = basic - deduction
         S += 1
-        item = [S, eid, basic, cor, paytime, verifier, worktime, deduction, real]
+        item = [S, eid, basic, paytime, verifier, worktime, deduction, real]
         sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary,
-         CorrespondingTime, PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
+         PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
          VALUES '''+str(tuple(item))
         cursor.execute(sql)
         db.commit()
