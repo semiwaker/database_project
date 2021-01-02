@@ -120,7 +120,7 @@ def salary_dispense():
     cursor = db.get_db().cursor()
     g.salary_list, last_salary_no = db.get_salary_list(cursor, g.user_id)
     g.salaryNos = range(last_salary_no+1, last_salary_no + len(g.salary_list))
-    g.salary_list = [(salaryNo, s[0], s[1], s[2], s[3])
+    g.salary_list = [[salaryNo, s[0], f"{s[1]}", s[2], s[3], s[4], s[5]]
                      for salaryNo, s in zip(g.salaryNos, g.salary_list)]
     if not db.check_dispensable(cursor, g.user_id, g.salaryNos):
         return redirect(url_for("main.denied"))
@@ -128,7 +128,9 @@ def salary_dispense():
     if request.method == 'POST':
         data = [
             {
-                "workTime": request.form["workTime"],
+                'employee_id': None,
+                "CorrespondingTime": request.form["workTime"],
+                "payTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "salaryNo": salaryNo,
                 "basicSalary": request.form["basic"+str(salaryNo)],
                 "deduction": request.form["deduction"+str(salaryNo)],

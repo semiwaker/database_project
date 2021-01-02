@@ -208,16 +208,20 @@ def get_salary_list(cursor, user_id):
     for reachable_id in reachable_L:
         if reachable_id == user_id:
             continue
-        sql = '''select Department_ID, Level
+        sql = '''select Name, Department_ID, Level
         from test.employee
         where EmployeeID = '''+str(reachable_id)
         cursor.execute(sql)
         result = cursor.fetchall()[0]
-        departmentID, level = result[0], result[1]
+        name, departmentID, level = result[0], result[1], result[2]
+        if departmentID is None:
+            print(reachable_id)
         if level == 'manager':
             basicSalary = 20000
         elif level == 'employee':
             basicSalary = 8000
+        else:
+            basicSalary = 30000
         sql = '''select count(Lateornot)+count(LeaveEarlyornot), count(*)
         from test.attendences
         where Date like \''''+month_str+'''%\'
@@ -234,10 +238,12 @@ def get_salary_list(cursor, user_id):
         cursor.execute(sql)
         leave_days = int(cursor.fetchall()[0][0])
         deduction = deduction_times*100+(20-leave_days-attendence_times)*200
-        ret_L.append((departmentID, basicSalary, deduction, basicSalary-deduction))
+        ret_L.append((reachable_id, name, departmentID, basicSalary,
+                      deduction, basicSalary-deduction))
     sql = '''select LastSalaryNo from test.metadata'''
     cursor.execute(sql)
-    last_salary_no = cursor.fetchall()[0][0]  # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
+    # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
+    last_salary_no = cursor.fetchall()[0][0]
     return (ret_L, last_salary_no)
     # [
     # () departmentID,basicSalary,deduction,realSalary
@@ -425,7 +431,6 @@ def add_new_salary(cursor, data):
 
     # data = [
     #     {
-    #         "workTime": ,
     #         "employee_id": ,  工资单所有者的id
     #         "CorrespondingTime": , 这个工资单对应的年月，可以以任何方便的形式给出，我来转成类似str(2020-01)的格式
     #         "payTime": ,  发放工资的时刻（精确到秒），可以直接用点下按钮的时间戳？
@@ -438,7 +443,7 @@ def add_new_salary(cursor, data):
     # ]
     # 记得更改最后的salayNo
 
-    #(nkc) 还未测试其正确性
+    # (nkc) 还未测试其正确性
     sql = '''select LastSalaryNo from test.metadata'''
     cursor.execute(sql)
     salayNo = cursor.fetchall()[0][0]
