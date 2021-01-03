@@ -93,6 +93,13 @@
             </div>
             {% endif %}
         </div>
+        <div class="row">
+        {% if g.error %}
+        <div class="alert alert-danger">
+            {{ g.error }}
+        </div>
+        {% endif %}
+        <div>
     </div>
     <footer class="footer">
         <div class="container">

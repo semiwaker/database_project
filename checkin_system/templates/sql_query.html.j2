@@ -24,6 +24,9 @@
 <button class="btn btn-primary" type="submit"> 提交</button>
 </form>
 <br/>
+{% if no_results %}
+<h3>查询无结果</h3>
+{% endif %}
 {% if sql_results %}
 {% for result in sql_results %}
 <h3>{{ result.summary }}</h3>

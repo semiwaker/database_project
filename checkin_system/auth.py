@@ -70,6 +70,9 @@ def load_logged_in_user():
 
         data = db.get_user_data(cursor, user_id)
 
+        if getattr(g, "error", None):
+            print(g.error)
+
         g.user_id = user_id
         g.username = data["username"]
         g.user_level = data["level"]

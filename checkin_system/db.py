@@ -3,8 +3,20 @@ from flask import g
 import pymysql
 
 import os
+import functools
 
 '''里面所有SQL语句都在前面加了个test.xxxx，是因为这样有代码提示，最后会删掉'''
+
+
+def throw_dec(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BaseException as e:
+            g.error = str(e)
+
+    return wrapper
 
 
 def get_password():
@@ -24,6 +36,7 @@ def get_db(name="test"):
     return db
 
 
+@throw_dec
 def __getResult(cursor):
     results = cursor.fetchall()
     col = cursor.description
@@ -35,6 +48,7 @@ def __getResult(cursor):
     return ret
 
 
+@throw_dec
 def get_department_list(cursor):
     sql = """select Department_ID as id, Department as name
     from test.department"""
@@ -43,6 +57,7 @@ def get_department_list(cursor):
     # return [{"id": None, "name": None}]
 
 
+@throw_dec
 def get_manager_list(cursor):
     sql = """select EmployeeID as id, name
         from test.employee"""
@@ -51,6 +66,7 @@ def get_manager_list(cursor):
     # return [{"id": None, "name": None}]
 
 
+@throw_dec
 def get_user_data(cursor, user_id):
     sql = """select username, name, gender, birthdate, department_id, E_mail as email,
     phone_number, id_number, level
@@ -85,6 +101,7 @@ def get_user_data(cursor, user_id):
     # }
 
 
+@throw_dec
 def get_password(cursor, userid):
     sql = """select password
             from test.employee
@@ -95,6 +112,7 @@ def get_password(cursor, userid):
     # return ""
 
 
+@throw_dec
 def get_id_and_password(cursor, username):
     sql = """select EmployeeID, Password
                 from test.employee
@@ -108,6 +126,7 @@ def get_id_and_password(cursor, username):
     # return (0, "")
 
 
+@throw_dec
 def get_department_and_level(cursor, user_id):
     sql = """select level, Department_ID
                 from test.employee
@@ -119,6 +138,7 @@ def get_department_and_level(cursor, user_id):
     return department, level
 
 
+@throw_dec
 def get_reachable_user_ids(cursor, user_id):
     # 查询所有下属用户id，包括自己
     department, level = get_department_and_level(cursor, user_id)
@@ -142,6 +162,7 @@ def get_reachable_user_ids(cursor, user_id):
     # return [user_id]
 
 
+@throw_dec
 def get_superior(cursor, user_id):
     department, level = get_department_and_level(cursor, user_id)
     if level == 'admin':
@@ -162,6 +183,7 @@ def get_superior(cursor, user_id):
         return result[0][0]
 
 
+@throw_dec
 def get_leave_list(cursor, user_id):
     # 查询所有下属的未审核的请假申请
     department, level = get_department_and_level(cursor, user_id)
@@ -197,6 +219,7 @@ def get_leave_list(cursor, user_id):
     # ]
 
 
+@throw_dec
 def get_salary_list(cursor, user_id):
     # 这个月的deduction要不就按一次迟到早退扣100，缺勤扣200算好了……
     # 算工作日太麻烦，我直接按每个月出勤20天，多了不补少了扣钱算的
@@ -250,6 +273,7 @@ def get_salary_list(cursor, user_id):
     # ]
 
 
+@throw_dec
 def get_department_info(cursor, department_id):
     sql = """select Department as name, manager_id, info as description
             from test.department
@@ -263,6 +287,7 @@ def get_department_info(cursor, department_id):
     # }
 
 
+@throw_dec
 def get_reminders(cursor, user_id):
     # (nkc)还未验证正确性
     department, level = get_department_and_level(cursor, user_id)
@@ -280,14 +305,118 @@ def get_reminders(cursor, user_id):
     return __getResult(cursor)
 
 
+@throw_dec
 def get_employee_xml(cursor, user_id):
-    # TODO
-    if user_id is None:
-        # return all employee
-        pass
-    return ""
+    def make_xml(cursor, user_id):
+        user_data = get_user_data(cursor, user_id)
+
+        sql = '''select SalaryNo, BasicSalary,
+                PayTime, VerifierID, Name as VerifierName, WorkTime, Deduction, RealSalary
+                from test.payroll, test.employee where
+                payroll.EmployeeID=''' + str(user_id)+'''
+                and VerifierID=employee.EmployeeID
+                '''
+        cursor.execute(sql)
+        salary_data = __getResult(cursor)
+
+        salary_xml = '\n'.join([f'''<Salary>
+  <SalaryNo>{salary["SalaryNo"]}</SalaryNo>
+  <DepartmentID>{user_data["department_id"]}</DepartmentID>
+  <BasicSalary>{salary["BasicSalary"]}</BasicSalary>
+  <Deduction>{salary["Deduction"]}</Deduction>
+  <RealSalary>{salary["RealSalary"]}</RealSalary>
+  <WorkTime>{salary["WorkTime"]}</WorkTime>
+  <PayTime>{salary["PayTime"]}</PayTime>
+  <VerifierID>{salary["VerifierID"]}</VerifierID>
+  <VerifierName>{salary["VerifierName"]}</VerifierName>
+</Salary>
+''' for salary in salary_data])
+
+        sql = f'''select Department from test.DEPARTMENT where Department_ID={user_data["department_id"]}'''
+        cursor.execute(sql)
+        user_data["department"] = __getResult(cursor)[0]['Department']
+
+        sql = f'''select AttendenceNo as LatingNo, Date as LatingDay, ArriveTime
+        from test.ATTENDENCES where EmployeeID={str(user_id)} and Lateornot=1
+        '''
+        cursor.execute(sql)
+        lating_data = __getResult(cursor)
+
+        for i in lating_data:
+            base = i["LatingDay"]
+            base = datetime.datetime(base.year, base.month, base.day, hour=9)
+            arr = datetime.datetime(
+                base.year, base.month, base.day) + i["ArriveTime"]
+            i["LatingTime"] = str((arr-base).seconds // 60) + " min"
+
+        lating_xml = '\n'.join([f'''<Lating>
+  <LatingNo>{lating["LatingNo"]}</LatingNo>
+  <LatingDay>{lating["LatingDay"]}</LatingDay>
+  <LatingTime>{lating["LatingTime"]}</LatingTime>
+</Lating>''' for lating in lating_data])
+
+        sql = '''select
+        LeaveNo, LeaveBegin, LeaveEnd, LeaveReason,
+        ApplyDay, Name as Reviewer
+        from test.leaves, test.employee
+        where leaves.EmployeeID='''+str(user_id)+'''
+        and ApplyStatus="accepted"
+        and leaves.ReviewerID=employee.EmployeeID
+        '''
+        cursor.execute(sql)
+        leaves_data = __getResult(cursor)
+        leaves_xml = '\n'.join([f'''<Leave>
+  <LeaveNo>{leave["LeaveNo"]}</LeaveNo>
+  <LeaveBegin>{leave["LeaveBegin"]}</LeaveBegin>
+  <LeaveEnd>{leave["LeaveEnd"]}</LeaveEnd>
+  <LeaveReason>{leave["LeaveReason"]}</LeaveReason>
+  <ApplyDay>{leave["ApplyDay"]}</ApplyDay>
+  <Reviewer>{leave["Reviewer"]}</Reviewer>
+</Leave>''' for leave in leaves_data])
+
+        birthday = user_data["birthdate"]
+        age = (datetime.date.today()-birthday).days // 365
+
+        result = f'''<Employee>
+  <EmployeeID>{str(user_id)}</EmployeeID>
+  <Info>
+    <BasicInfo>
+      <Name>{user_data["name"]}</Name>
+      <Gender>{user_data["gender"]}</Gender>
+      <Birthdate>{user_data["birthdate"]}</Birthdate>
+      <Age>{age}</Age>
+      <Email>{user_data["email"]}</Email>
+      <Phone>{user_data["phone_number"]}</Phone>
+      <DepartmentID>{user_data["department_id"]}</DepartmentID>
+      <Department>{user_data["department"]}</Department>
+      <Level>{user_data["level"]}</Level>
+    </BasicInfo>
+    <OtherInfo>
+        <Salaries>
+        {salary_xml}
+        </Salaries>
+        <Latings>
+        {lating_xml}
+        </Latings>
+        <Leaves>
+        {leaves_xml}
+        </Leaves>
+    </OtherInfo>
+  </Info>
+</Employee>'''
+        return result
+
+    if user_id == 'all':
+        cursor.execute('select EmployeeID from test.EMPLOYEE')
+        ids = __getResult(cursor)
+        xmls = '\n'.join([make_xml(cursor, i["EmployeeID"]) for i in ids])
+        result = f"<XML><Employees>{xmls}</Employees></XML>"
+    else:
+        result = f"<XML><Employees>{make_xml(cursor, user_id)}</Employees></XML>"
+    return result.replace('\n', '')
 
 
+@throw_dec
 def check_reviewable(cursor, user_id, leave_no):
     department, level = get_department_and_level(cursor, user_id)
     if level == 'admin':
@@ -306,7 +435,7 @@ def check_reviewable(cursor, user_id, leave_no):
     return True
 
 
-
+@throw_dec
 def check_department_updatable(cursor, user_id, department_id):
     department, level = get_department_and_level(cursor, user_id)
     if level == 'admin' or (level == 'manager' and department == int(department_id)):
@@ -314,6 +443,7 @@ def check_department_updatable(cursor, user_id, department_id):
     return False
 
 
+@throw_dec
 def accept_leave(cursor, leave_no):
     sql = '''update test.leaves
     set ApplyStatus = 'accepted'
@@ -322,6 +452,7 @@ def accept_leave(cursor, leave_no):
     g.db.commit()
 
 
+@throw_dec
 def reject_leave(cursor, leave_no):
     sql = '''update test.leaves
         set ApplyStatus = 'rejected'
@@ -330,6 +461,7 @@ def reject_leave(cursor, leave_no):
     g.db.commit()
 
 
+@throw_dec
 def new_employee_id(cursor):
     sql = '''select LastEmployeeNo + 1
     from test.metadata '''
@@ -342,6 +474,7 @@ def new_employee_id(cursor):
     return result[0][0]
 
 
+@throw_dec
 def new_department_id(cursor):
     sql = '''select LastDepartmentNo + 1
     from test.metadata '''
@@ -359,6 +492,7 @@ def new_department_id(cursor):
     return ret
 
 
+@throw_dec
 def new_leave_id(cursor):
     sql = '''select LastLeaveNo + 1
     from test.metadata '''
@@ -371,6 +505,7 @@ def new_leave_id(cursor):
     return result[0][0]
 
 
+@throw_dec
 def add_new_employee(cursor, data):
     # data = {
     #     "employee_id": ,
@@ -399,6 +534,7 @@ def add_new_employee(cursor, data):
     g.db.commit()
 
 
+@throw_dec
 def add_new_leave(cursor, data):
     # data = {
     #     "user_id": ,
@@ -434,6 +570,7 @@ def add_new_leave(cursor, data):
     g.db.commit()
 
 
+@throw_dec
 def add_new_salary(cursor, data):
     # (nkc) data里还需要一些东西，标在下面了
 
@@ -471,6 +608,7 @@ def add_new_salary(cursor, data):
     g.db.commit()
 
 
+@throw_dec
 def update_employee_info(cursor, data):
     # 修改自己
     # data = {
@@ -516,6 +654,7 @@ def update_employee_info(cursor, data):
     g.db.commit()
 
 
+@throw_dec
 def update_department_info(cursor, data):
     # data = {
     #     "department_id": ,
@@ -534,6 +673,7 @@ def update_department_info(cursor, data):
     g.db.commit()
 
 
+@throw_dec
 def check_in(cursor, user_id, in_time, late):
     sql = '''select LastAttendenceNo + 1
         from test.metadata '''
@@ -556,6 +696,7 @@ def check_in(cursor, user_id, in_time, late):
     g.db.commit()
 
 
+@throw_dec
 def check_out(cursor, user_id, out_time, early):
     sql = '''update test.attendences
     set LeaveTime = \''''+out_time.strftime("%H:%M:%S")+'''\',
@@ -566,6 +707,7 @@ def check_out(cursor, user_id, out_time, early):
     g.db.commit()
 
 
+@throw_dec
 def delete_department(cursor, department_id):
     sql = '''delete from test.department
             where Department_ID = ''' + str(department_id)
@@ -573,6 +715,7 @@ def delete_department(cursor, department_id):
     g.db.commit()
 
 
+@throw_dec
 def delete_user(cursor, user_id):
     sql = '''delete from test.attendences
                 where EmployeeID = ''' + str(user_id)
@@ -592,6 +735,7 @@ def delete_user(cursor, user_id):
     g.db.commit()
 
 
+@throw_dec
 def clear_reminder(cursor, user_id):
     # (nkc) 还未验证其正确性
     department, level = get_department_and_level(cursor, user_id)
@@ -612,6 +756,7 @@ def clear_reminder(cursor, user_id):
 
 
 # Query 1
+@throw_dec
 def Query_leaveandlate_202001(cursor, topnum=10):
     sql = """with E_leaves(EmployeeID, tot_leaves) as
         (select EmployeeID, sum(Duration)
@@ -634,6 +779,7 @@ def Query_leaveandlate_202001(cursor, topnum=10):
 # Query 2.1
 
 
+@throw_dec
 def Query_MaxVerifier_leaves(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
@@ -655,6 +801,7 @@ def Query_MaxVerifier_leaves(cursor):
 # Query 2.2
 
 
+@throw_dec
 def Query_MaxVerifier_lates(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
@@ -676,6 +823,7 @@ def Query_MaxVerifier_lates(cursor):
 # Query 3
 
 
+@throw_dec
 def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
     sql = """with cur(eid, Deduction, RealSalary) as
         (select EmployeeID, Deduction, RealSalary
@@ -693,6 +841,7 @@ def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
 
 
 # Query 4
+@throw_dec
 def Query_MaxRealSalary_2020(cursor):
     sql = """with tmp(Name, WorkTime, RealSalary) as
             (select Name, WorkTime, RealSalary
@@ -717,6 +866,7 @@ def Query_MaxRealSalary_2020(cursor):
 
 
 # Query 5
+@throw_dec
 def Query_HugeLatingDuration(cursor):
     sql = """select Name, t1.Department_ID, LatesDuration
     from(select Department_ID, avg(LeaveDuration) * 24 as AVG_leaveDuration, month
@@ -741,6 +891,7 @@ def Query_HugeLatingDuration(cursor):
 
 
 # Query 6
+@throw_dec
 def Query_OverruledManyTimes(cursor):
     sql = """with GGperson(EmployeeID, Latetimes, Leavetimes, month) as
             (select t1.EmployeeID, Latetimes, Leavetimes, t1.month
@@ -763,6 +914,7 @@ def Query_OverruledManyTimes(cursor):
     """
 
 
+@throw_dec
 def Query_SQL(cursor, sql):
     cursor.execute(sql)
     return __getResult(cursor)

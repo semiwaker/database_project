@@ -5,13 +5,13 @@
 {% endblock %}
 
 {% block script %}
-<script src="{{ url_for('static', filename='employee_display.js') }}"></script>
+<script src="{{ url_for('static', filename='employee_display.js') }}" type="text/babel"></script>
 {% endblock %}
 
 {% block content %}
-<h2>员工展示框</h2>
+{# <h2>员工展示框</h2> #}
 {% if g.user_level == 'admin' or g.user_level == 'manager' %}
-    <div id="employee_selection" user_id='{{ g.user_id }}' users='{{ g.reachable_users }}' ></div>
+    <div id="employee_selection" user_id="{{ g.user_id }}" users="{{ g.reachable_users }}" ></div>
 {% endif %}
 <div id="employee_display" employee_id="{{ g.user_id }}"></div>
 

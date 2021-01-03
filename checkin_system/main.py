@@ -1,7 +1,7 @@
 import datetime
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for, Markup
+    Blueprint, flash, g, redirect, render_template, request, session, url_for, Markup, Response
 )
 
 from . import db
@@ -20,10 +20,8 @@ def home():
     g.reachable_users = []
     for user_id in g.reachable_user_ids:
         data = db.get_user_data(cursor, user_id)
-        g.reachable_users += {
-            "user_id": user_id,
-            'name': data["name"]
-        }
+        g.reachable_users.append([user_id, data["name"]])
+    # print(g.reachable_users)
 
     return render_template('home.html.j2')
 
@@ -34,7 +32,12 @@ def employee_info(user_id):
     if g.user_level != "admin" and user_id == "all":
         return redirect(url_for("main.denied"))
     cursor = db.get_db().cursor()
-    return db.get_employee_xml(user_id)
+    return Response(
+        response=Markup(db.get_employee_xml(cursor, user_id)),
+        status=200,
+        mimetype="application/xml",
+        content_type="text/xml; charset=utf-8"
+    )
 
 
 @bp.route('/check_in')
@@ -48,6 +51,7 @@ def check_in():
 
     cursor = db.get_db().cursor()
     db.check_in(cursor, g.user_id, in_time, late)
+
     return redirect(url_for('main.success'))
 
 
@@ -311,6 +315,7 @@ def sql_query(query_id):
     summaries = None
     sql_results = None
     last_sql = None
+    no_results = None
     query_id = int(query_id)
     query_funcs = {
         1: [db.Query_leaveandlate_202001],
@@ -344,10 +349,11 @@ def sql_query(query_id):
                 "summary": summary,
                 "title": [u for u, v in result[0].items()],
                 "content": [[v for u, v in row.items()] for row in result]
-            } for result, summary in zip(results, summaries)
+            } for result, summary in zip(results, summaries) if result and len(result)
         ]
+        no_results = len(sql_results) == 0
 
-    return render_template("sql_query.html.j2", sql_results=sql_results, last_sql=last_sql)
+    return render_template("sql_query.html.j2", sql_results=sql_results, last_sql=last_sql, no_results=no_results)
 
 
 @bp.route("/reminder", methods=["GET", "POST"])
