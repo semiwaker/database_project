@@ -231,9 +231,10 @@ def employee_modify(user_id):
                     "level": g.user_data["level"]
                 }
             db.update_employee_info(cursor, data)
-            msg = Markup("修改成功")
-            succeed = True
-    return render_template('employee_modify.html.j2', msg=msg, succeed=True)
+            if not getattr(g, "error", None):
+                msg = Markup("修改成功")
+                succeed = True
+    return render_template('employee_modify.html.j2', msg=msg, succeed=succeed)
 
 
 @bp.route('/employee_modify/delete/<user_id>', methods=['POST'])

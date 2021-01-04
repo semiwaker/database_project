@@ -30,11 +30,12 @@ def register():
             "level": "employee",
             "entry_date": datetime.date.today().strftime("%Y-%m-%d")
         }
-        db.add_new_employee(cursor, data)
-        session.clear()
-        session["user_id"], _ = db.get_id_and_password(
-            cursor, data["username"])
-        return redirect(url_for("main.success"))
+        db.add_new_employee(c，cursor, data)
+        if not getattr(g, "error", None):
+            session.clear()
+            session["user_id"], _ = db.get_id_and_password(
+                cursor, data["username"])
+            return redirect(url_for("main.success"))
 
     return render_template('auth/register.html.j2')
 
