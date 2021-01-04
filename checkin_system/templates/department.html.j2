@@ -41,15 +41,20 @@
     </textarea>
 </div>
 
+{% if msg %}
+{% if succeed %}
+<div class="alert alert-success">{{ msg }}</div>
+{% else %}
+<div class="alert alert-danger">{{ msg }}</div>
+{% endif %}
+{% endif %}
+
 <div class="col-sm-1">
     <button type="submit" class="btn btn-primary">修改</button>
 </div>
 <div class="col-sm-1">
 <a href="{{ url_for('main.remove_department', department_id=g.department_id) }}" class="btn btn-danger"> 删除部门 </a>
 </div>
-{% if msg %}
-<div class="alert alert-danger">{{ msg }}</div>
-{% endif %}
 </form>
 <br/>
 {% endblock %}
