@@ -263,7 +263,6 @@ def department(department_id):
         if not db.check_department_updatable(cursor, g.user_id, department_id):
             msg = Markup("权限不足，无法修改部门信息！")
         else:
-            # TODO 应该和员工那个禁用的输入框问题一样
             data = {
                 "department_id": department_id,
                 "name": request.form["department_name"],

@@ -125,59 +125,6 @@ sql = """create table BADEVENTS (
         )"""
 cursor.execute(sql)
 
-sql = """create trigger LeaveAutoDetect AFTER UPDATE
-ON test.leaves FOR EACH ROW
-BEGIN
-    if (NEW.ApplyStatus = 'accepted' and NEW.Privateornot = TRUE)
-        then
-        insert into test.badevents(EmployeeID, Date)
-        VALUES (NEW.EmployeeID, NEW.LeaveEnd);
-        select count(*) from test.badevents
-            where EmployeeID = NEW.EmployeeID
-            and DATEDIFF(Date, NEW.LeaveBegin)>=-6 into @a;
-        if @a > 3
-            then
-            if (select count(*) from test.reminders
-                where EmployeeID = NEW.EmployeeID) > 0
-                then
-                UPDATE test.reminders
-                set Total = @a
-                where EmployeeID = NEW.EmployeeID;
-                else
-                insert into test.reminders(EmployeeID, Total)
-                VALUES (NEW.EmployeeID, @a);
-            end if;
-        end if;
-    end if;
-end;"""
-cursor.execute(sql)
-
-sql = """create trigger LateAutoDetect AFTER INSERT
-ON test.attendences FOR EACH ROW
-BEGIN
-    if (NEW.Lateornot = TRUE)
-        then
-        insert into test.badevents(EmployeeID, Date)
-        VALUES (NEW.EmployeeID, NEW.Date);
-        select count(*) from test.badevents
-            where EmployeeID = NEW.EmployeeID
-            and DATEDIFF(Date, NEW.Date)>=-6 into @a;
-        if @a > 3
-            then
-            if (select count(*) from test.reminders
-                where EmployeeID = NEW.EmployeeID) > 0
-                then
-                UPDATE test.reminders
-                set Total = @a
-                where EmployeeID = NEW.EmployeeID;
-                else
-                insert into test.reminders(EmployeeID, Total)
-                VALUES (NEW.EmployeeID, @a);
-            end if;
-        end if;
-    end if;
-end;"""
-cursor.execute(sql)
 
 # 数据生成部分
 first_name = ['Jacob', 'Emily', 'Michael', 'Hannah',
@@ -270,7 +217,8 @@ for eid in range(1, n+1):
         leave_P = 0.02
         verifier = Admin
     else:
-        continue
+        late_P = 0
+        leave_P = 0
 
     begin = datetime.date(2020, 1, 6)
     end = datetime.date(2020, 12, 25)
@@ -356,8 +304,8 @@ for eid in range(1, n+1):
     else:
         basic = 8000
         verifier = Admin
-    worktime = 2021 - int(Employee[eid - 1][4][0:4])
     for month in range(1, 13):
+        worktime = "2020-"+str(month).zfill(2)
         paytime = datetime.datetime(
             2021 if month == 12 else 2020,
             1 if month == 12 else month+1,
@@ -379,3 +327,59 @@ sql = """insert into test.METADATA
         values """+str((n, D, S, L, A))
 cursor.execute(sql)
 db.commit()
+
+
+# 为了防止有以前的提醒，最后再加触发器
+sql = """create trigger LeaveAutoDetect AFTER UPDATE
+ON test.leaves FOR EACH ROW
+BEGIN
+    if (NEW.ApplyStatus = 'accepted' and NEW.Privateornot = TRUE)
+        then
+        insert into test.badevents(EmployeeID, Date)
+        VALUES (NEW.EmployeeID, NEW.LeaveEnd);
+        select count(*) from test.badevents
+            where EmployeeID = NEW.EmployeeID
+            and DATEDIFF(Date, NEW.LeaveBegin)>=-6 into @a;
+        if @a > 3
+            then
+            if (select count(*) from test.reminders
+                where EmployeeID = NEW.EmployeeID) > 0
+                then
+                UPDATE test.reminders
+                set Total = @a
+                where EmployeeID = NEW.EmployeeID;
+                else
+                insert into test.reminders(EmployeeID, Total)
+                VALUES (NEW.EmployeeID, @a);
+            end if;
+        end if;
+    end if;
+end;"""
+cursor.execute(sql)
+
+sql = """create trigger LateAutoDetect AFTER INSERT
+ON test.attendences FOR EACH ROW
+BEGIN
+    if (NEW.Lateornot = TRUE)
+        then
+        insert into test.badevents(EmployeeID, Date)
+        VALUES (NEW.EmployeeID, NEW.Date);
+        select count(*) from test.badevents
+            where EmployeeID = NEW.EmployeeID
+            and DATEDIFF(Date, NEW.Date)>=-6 into @a;
+        if @a > 3
+            then
+            if (select count(*) from test.reminders
+                where EmployeeID = NEW.EmployeeID) > 0
+                then
+                UPDATE test.reminders
+                set Total = @a
+                where EmployeeID = NEW.EmployeeID;
+                else
+                insert into test.reminders(EmployeeID, Total)
+                VALUES (NEW.EmployeeID, @a);
+            end if;
+        end if;
+    end if;
+end;"""
+cursor.execute(sql)
