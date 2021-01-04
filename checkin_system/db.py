@@ -149,13 +149,15 @@ def get_reachable_user_ids(cursor, user_id):
             from test.employee
             where Department_ID = """ + str(department) + """
             and Level != "admin"
+            order by Name
             """
         cursor.execute(sql)
         results = cursor.fetchall()
         return [item[0] for item in results]
     elif level == 'admin':
         sql = """select EmployeeID
-            from test.employee"""
+            from test.employee
+            order by Name"""
         cursor.execute(sql)
         results = cursor.fetchall()
         return [item[0] for item in results]
@@ -315,6 +317,7 @@ def get_employee_xml(cursor, user_id):
                 from test.payroll, test.employee where
                 payroll.EmployeeID=''' + str(user_id)+'''
                 and VerifierID=employee.EmployeeID
+                order by Paytime desc
                 '''
         cursor.execute(sql)
         salary_data = __getResult(cursor)
@@ -338,6 +341,7 @@ def get_employee_xml(cursor, user_id):
 
         sql = f'''select AttendenceNo as LatingNo, Date as LatingDay, ArriveTime
         from test.ATTENDENCES where EmployeeID={str(user_id)} and Lateornot=1
+        order by Date desc
         '''
         cursor.execute(sql)
         lating_data = __getResult(cursor)
@@ -662,13 +666,25 @@ def update_department_info(cursor, data):
     #     "manager": ,
     #     "description":
     # }
+    sql = '''update test.employee
+                set level = 'employee'
+                where level = 'manager'
+                and Department_ID = ''' + str(data['department_id'])
+    cursor.execute(sql)
+    g.db.commit()
 
-    # (nkc)此处是否需要更新这个人的level?
     sql = '''update test.department
             set Department = \'''' + data['name'] + '''\',
             Manager_ID = ''' + data['manager'] + ''',
             info = \'''' + data['description'] + '''\'
             where Department_ID = ''' + str(data['department_id'])
+    cursor.execute(sql)
+    g.db.commit()
+
+    sql = '''update test.employee
+            set Department_ID = \'''' + str(data['department_id']) + '''\',
+            Level = 'manager'
+            where EmployeeID = ''' + str(data['manager'])
     cursor.execute(sql)
     g.db.commit()
 
