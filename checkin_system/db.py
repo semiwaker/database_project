@@ -5,7 +5,7 @@ import pymysql
 import os
 import functools
 
-'''里面所有SQL语句都在前面加了个test.xxxx，是因为这样有代码提示，最后会删掉'''
+'''里面所有SQL语句都在前面加了个ProjectExecutionComp.xxxx，是因为这样有代码提示，最后会删掉'''
 
 
 def throw_dec(func):
@@ -30,7 +30,7 @@ def get_dbpassword():
 db_password = get_dbpassword()
 
 
-def get_db(name="test"):
+def get_db(name="ProjectExecutionComp"):
     db = pymysql.connect("localhost", "root", db_password, name)
     g.db = db
     return db
@@ -51,7 +51,7 @@ def __getResult(cursor):
 @throw_dec
 def get_department_list(cursor):
     sql = """select Department_ID as id, Department as name
-    from test.department"""
+    from ProjectExecutionComp.department"""
     cursor.execute(sql)
     return __getResult(cursor)
     # return [{"id": None, "name": None}]
@@ -60,7 +60,7 @@ def get_department_list(cursor):
 @throw_dec
 def get_manager_list(cursor):
     sql = """select EmployeeID as id, name
-        from test.employee"""
+        from ProjectExecutionComp.employee"""
     cursor.execute(sql)
     return __getResult(cursor)
     # return [{"id": None, "name": None}]
@@ -70,13 +70,13 @@ def get_manager_list(cursor):
 def get_user_data(cursor, user_id):
     sql = """select username, name, gender, birthdate, department_id, E_mail as email,
     phone_number, id_number, level
-    from test.employee
+    from ProjectExecutionComp.employee
     where EmployeeID = """+str(user_id)
     cursor.execute(sql)
     ret_dict = __getResult(cursor)[0]
     today = datetime.date.today().strftime('%Y-%m-%d')
     sql = """select *
-    from test.attendences
+    from ProjectExecutionComp.attendences
     where EmployeeID = """+str(user_id)+"""
     and Date = \'"""+today+'\''
 
@@ -104,7 +104,7 @@ def get_user_data(cursor, user_id):
 @throw_dec
 def get_password(cursor, userid):
     sql = """select password
-            from test.employee
+            from ProjectExecutionComp.employee
             where EmployeeID = """+str(userid)
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -115,7 +115,7 @@ def get_password(cursor, userid):
 @throw_dec
 def get_id_and_password(cursor, username):
     sql = """select EmployeeID, Password
-                from test.employee
+                from ProjectExecutionComp.employee
                 where Username = \'""" + username + "\'"
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -129,7 +129,7 @@ def get_id_and_password(cursor, username):
 @throw_dec
 def get_department_and_level(cursor, user_id):
     sql = """select level, Department_ID
-                from test.employee
+                from ProjectExecutionComp.employee
                 where EmployeeID = """ + str(user_id)
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -146,7 +146,7 @@ def get_reachable_user_ids(cursor, user_id):
         return [user_id]
     elif level == 'manager':
         sql = """select EmployeeID
-            from test.employee
+            from ProjectExecutionComp.employee
             where Department_ID = """ + str(department) + """
             and Level != "admin"
             order by Name
@@ -156,7 +156,7 @@ def get_reachable_user_ids(cursor, user_id):
         return [item[0] for item in results]
     elif level == 'admin':
         sql = """select EmployeeID
-            from test.employee
+            from ProjectExecutionComp.employee
             order by Name"""
         cursor.execute(sql)
         results = cursor.fetchall()
@@ -171,14 +171,14 @@ def get_superior(cursor, user_id):
         return None
     elif level == 'manager':
         sql = """select EmployeeID
-                from test.employee
+                from ProjectExecutionComp.employee
                 where Level = \'admin\'"""
         cursor.execute(sql)
         result = cursor.fetchall()
         return result[0][0]
     elif level == 'employee':
         sql = """select Manager_ID
-            from test.department
+            from ProjectExecutionComp.department
             where Department_ID = """ + str(department)
         cursor.execute(sql)
         result = cursor.fetchall()
@@ -194,7 +194,7 @@ def get_leave_list(cursor, user_id):
     elif level == 'manager':
         sql = """select LeaveNo as leave_no, Name as name, LeaveBegin as leave_begin, LeaveEnd as leave_end,
             LeaveReason as leave_reason, ApplyDay as apply_day
-            from test.leaves, test.employee
+            from ProjectExecutionComp.leaves, ProjectExecutionComp.employee
             where leaves.EmployeeID = employee.EmployeeID
                 and ApplyStatus = \'pending\'
                 and Department_ID = """+str(department)+"""
@@ -204,7 +204,7 @@ def get_leave_list(cursor, user_id):
     elif level == 'admin':
         sql = """select LeaveNo as leave_no, Name as name, LeaveBegin as leave_begin, LeaveEnd as leave_end,
             LeaveReason as leave_reason, ApplyDay as apply_day
-            from test.leaves, test.employee
+            from ProjectExecutionComp.leaves, ProjectExecutionComp.employee
             where leaves.EmployeeID = employee.EmployeeID
                 and ApplyStatus = \'pending\'"""
         cursor.execute(sql)
@@ -234,7 +234,7 @@ def get_salary_list(cursor, user_id):
         if reachable_id == user_id:
             continue
         sql = '''select Name, Department_ID, Level
-        from test.employee
+        from ProjectExecutionComp.employee
         where EmployeeID = '''+str(reachable_id)
         cursor.execute(sql)
         result = cursor.fetchall()[0]
@@ -248,14 +248,14 @@ def get_salary_list(cursor, user_id):
         else:
             basicSalary = 20000
         sql = '''select count(Lateornot)+count(LeaveEarlyornot), count(*)
-        from test.attendences
+        from ProjectExecutionComp.attendences
         where Date like \''''+month_str+'''%\'
         and EmployeeID = '''+str(reachable_id)
         cursor.execute(sql)
         result = cursor.fetchall()[0]
         deduction_times, attendence_times = result[0], result[1]
         sql = '''select ifnull(sum(Duration), 0)
-        from test.leaves
+        from ProjectExecutionComp.leaves
         where ApplyStatus = 'accepted'
         and YEAR(LeaveBegin) = '''+today.strftime('%Y')+'''
         and MONTH(LeaveBegin) = '''+today.strftime('%m')+'''
@@ -265,7 +265,7 @@ def get_salary_list(cursor, user_id):
         deduction = deduction_times*100+(20-leave_days-attendence_times)*200
         ret_L.append((reachable_id, name, departmentID, basicSalary,
                       deduction, basicSalary-deduction))
-    sql = '''select LastSalaryNo from test.metadata'''
+    sql = '''select LastSalaryNo from ProjectExecutionComp.metadata'''
     cursor.execute(sql)
     # 最后一个salary编号, 因为不能确定是否分发，必须等操作完了再修改最后的salary编号
     last_salary_no = cursor.fetchall()[0][0]
@@ -278,7 +278,7 @@ def get_salary_list(cursor, user_id):
 @throw_dec
 def get_department_info(cursor, department_id):
     sql = """select Department as name, manager_id, info as description
-            from test.department
+            from ProjectExecutionComp.department
             where Department_ID = """ + str(department_id)
     cursor.execute(sql)
     return __getResult(cursor)[0]
@@ -295,11 +295,11 @@ def get_reminders(cursor, user_id):
     department, level = get_department_and_level(cursor, user_id)
     if level == 'admin':
         sql = '''select employee.EmployeeID as id, name, total
-        from test.reminders, test.employee
+        from ProjectExecutionComp.reminders, ProjectExecutionComp.employee
         where employee.EmployeeID = reminders.EmployeeID'''
     elif level == 'manager':
         sql = '''select employee.EmployeeID as id, name, total
-            from test.reminders, test.employee
+            from ProjectExecutionComp.reminders, ProjectExecutionComp.employee
             where employee.EmployeeID = reminders.EmployeeID
             and Department_ID = '''+str(department)+'''
             and employee.EmployeeID != '''+str(user_id)
@@ -314,7 +314,7 @@ def get_employee_xml(cursor, user_id):
 
         sql = '''select SalaryNo, BasicSalary,
                 PayTime, VerifierID, Name as VerifierName, WorkTime, Deduction, RealSalary
-                from test.payroll, test.employee where
+                from ProjectExecutionComp.payroll, ProjectExecutionComp.employee where
                 payroll.EmployeeID=''' + str(user_id)+'''
                 and VerifierID=employee.EmployeeID
                 order by Paytime desc
@@ -335,12 +335,12 @@ def get_employee_xml(cursor, user_id):
 </Salary>
 ''' for salary in salary_data])
 
-        sql = f'''select Department from test.DEPARTMENT where Department_ID={user_data["department_id"]}'''
+        sql = f'''select Department from ProjectExecutionComp.DEPARTMENT where Department_ID={user_data["department_id"]}'''
         cursor.execute(sql)
         user_data["department"] = __getResult(cursor)[0]['Department']
 
         sql = f'''select AttendenceNo as LatingNo, Date as LatingDay, ArriveTime
-        from test.ATTENDENCES where EmployeeID={str(user_id)} and Lateornot=1
+        from ProjectExecutionComp.ATTENDENCES where EmployeeID={str(user_id)} and Lateornot=1
         order by Date desc
         '''
         cursor.execute(sql)
@@ -362,7 +362,7 @@ def get_employee_xml(cursor, user_id):
         sql = '''select
         LeaveNo, LeaveBegin, LeaveEnd, LeaveReason,
         ApplyDay, Name as Reviewer
-        from test.leaves, test.employee
+        from ProjectExecutionComp.leaves, ProjectExecutionComp.employee
         where leaves.EmployeeID='''+str(user_id)+'''
         and ApplyStatus="accepted"
         and leaves.ReviewerID=employee.EmployeeID
@@ -411,7 +411,7 @@ def get_employee_xml(cursor, user_id):
         return result
 
     if user_id == 'all':
-        cursor.execute('select EmployeeID from test.EMPLOYEE')
+        cursor.execute('select EmployeeID from ProjectExecutionComp.EMPLOYEE')
         ids = __getResult(cursor)
         xmls = '\n'.join([make_xml(cursor, i["EmployeeID"]) for i in ids])
         result = f"<XML><Employees>{xmls}</Employees></XML>"
@@ -428,7 +428,7 @@ def check_reviewable(cursor, user_id, leave_no):
     elif level == 'employee':
         return False
     sql = '''select leaves.EmployeeID, Department_ID
-    from test.leaves, test.employee
+    from ProjectExecutionComp.leaves, ProjectExecutionComp.employee
     where LeaveNo = '''+str(leave_no)+'''
         and leaves.EmployeeID = employee.EmployeeID'''
     cursor.execute(sql)
@@ -449,7 +449,7 @@ def check_department_updatable(cursor, user_id, department_id):
 
 @throw_dec
 def accept_leave(cursor, leave_no):
-    sql = '''update test.leaves
+    sql = '''update ProjectExecutionComp.leaves
     set ApplyStatus = 'accepted'
     where LeaveNo = ''' + str(leave_no)
     cursor.execute(sql)
@@ -458,7 +458,7 @@ def accept_leave(cursor, leave_no):
 
 @throw_dec
 def reject_leave(cursor, leave_no):
-    sql = '''update test.leaves
+    sql = '''update ProjectExecutionComp.leaves
         set ApplyStatus = 'rejected'
         where LeaveNo = ''' + str(leave_no)
     cursor.execute(sql)
@@ -468,10 +468,10 @@ def reject_leave(cursor, leave_no):
 @throw_dec
 def new_employee_id(cursor):
     sql = '''select LastEmployeeNo + 1
-    from test.metadata '''
+    from ProjectExecutionComp.metadata '''
     cursor.execute(sql)
     result = cursor.fetchall()
-    sql = '''update test.metadata
+    sql = '''update ProjectExecutionComp.metadata
         set LastEmployeeNo = LastEmployeeNo + 1'''
     cursor.execute(sql)
     g.db.commit()
@@ -481,15 +481,15 @@ def new_employee_id(cursor):
 @throw_dec
 def new_department_id(cursor):
     sql = '''select LastDepartmentNo + 1
-    from test.metadata '''
+    from ProjectExecutionComp.metadata '''
     cursor.execute(sql)
     result = cursor.fetchall()
     ret = result[0][0]
-    sql = '''insert into test.department(Department_ID, Department)
-    VALUES ('''+str(ret)+',\'No.'+str(ret+1)+'\')'
+    sql = '''insert into ProjectExecutionComp.department(Department_ID, Department)
+    VALUES ('''+str(ret)+',\'No.'+str(ret)+'\')'
     cursor.execute(sql)
     g.db.commit()
-    sql = '''update test.metadata
+    sql = '''update ProjectExecutionComp.metadata
     set LastDepartmentNo = LastDepartmentNo + 1'''
     cursor.execute(sql)
     g.db.commit()
@@ -499,10 +499,10 @@ def new_department_id(cursor):
 @throw_dec
 def new_leave_id(cursor):
     sql = '''select LastLeaveNo + 1
-    from test.metadata '''
+    from ProjectExecutionComp.metadata '''
     cursor.execute(sql)
     result = cursor.fetchall()
-    sql = '''update test.metadata
+    sql = '''update ProjectExecutionComp.metadata
         set LastLeaveNo = LastLeaveNo + 1'''
     cursor.execute(sql)
     g.db.commit()
@@ -530,7 +530,7 @@ def add_new_employee(cursor, data):
     tmp = (data['employee_id'], data['name'], data['birthdate'], data['id_number'],
            data['entry_date'], data['username'], data['password'], data['gender'],
            data['phone_number'], data['email'], data['level'], data['department_id'])
-    sql = '''insert into test.employee
+    sql = '''insert into ProjectExecutionComp.employee
     (EMPLOYEEID, NAME, BIRTHDATE, ID_NUMBER, ENTRYDATE, USERNAME, PASSWORD,
     GENDER, PHONE_NUMBER, E_MAIL, LEVEL, DEPARTMENT_ID)
         VALUES ''' + str(tmp)
@@ -566,7 +566,7 @@ def add_new_leave(cursor, data):
            'pending',
            duration
            )
-    sql = '''insert into test.leaves
+    sql = '''insert into ProjectExecutionComp.leaves
         (EmployeeID, LeaveNo, LeaveBegin, LeaveEnd, LeaveReason,
         Privateornot, ApplyDay, ReviewerID, ApplyStatus, Duration)
             VALUES ''' + str(tmp)
@@ -593,20 +593,20 @@ def add_new_salary(cursor, data):
     # 记得更改最后的salayNo
 
     # (nkc) 还未测试其正确性
-    sql = '''select LastSalaryNo from test.metadata'''
+    sql = '''select LastSalaryNo from ProjectExecutionComp.metadata'''
     cursor.execute(sql)
     salayNo = cursor.fetchall()[0][0]
     for D in data:
         item = (D['salaryNo'], D['employee_id'], D['basicSalary'],
                 D['payTime'], D['verifier'],
                 D['workTime'], D['deduction'], D['realSalary'])
-        sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary,
+        sql = '''insert into ProjectExecutionComp.payroll(SalaryNo, EmployeeID, BasicSalary,
                 PayTime, VerifierID, WorkTime, Deduction, RealSalary)
         VALUES '''+str(tuple(item))
         cursor.execute(sql)
         g.db.commit()
         salayNo = max(salayNo, D['salaryNo'])
-    sql = '''update test.metadata
+    sql = '''update ProjectExecutionComp.metadata
     set LastSalaryNo = '''+str(salayNo)
     cursor.execute(sql)
     g.db.commit()
@@ -638,7 +638,7 @@ def update_employee_info(cursor, data):
     # }
 
     if 'level' in data:
-        sql = '''update test.employee
+        sql = '''update ProjectExecutionComp.employee
         set Name = \'''' + data['name'] + '''\',
         Gender = \'''' + data['gender'] + '''\',
         Birthdate = \'''' + data['birthdate'] + '''\',
@@ -649,7 +649,7 @@ def update_employee_info(cursor, data):
         Level = \'''' + data['level'] + '''\'
         where EmployeeID = ''' + str(data['user_id'])
     else:
-        sql = '''update test.employee
+        sql = '''update ProjectExecutionComp.employee
         set E_mail = \'''' + data['email'] + '''\',
         Phone_number = \'''' + data['phone_number'] + '''\',
         Password = \'''' + data['password'] + '''\'
@@ -666,14 +666,14 @@ def update_department_info(cursor, data):
     #     "manager": ,
     #     "description":
     # }
-    sql = '''update test.employee
+    sql = '''update ProjectExecutionComp.employee
                 set level = 'employee'
                 where level = 'manager'
                 and Department_ID = ''' + str(data['department_id'])
     cursor.execute(sql)
     g.db.commit()
 
-    sql = '''update test.department
+    sql = '''update ProjectExecutionComp.department
             set Department = \'''' + data['name'] + '''\',
             Manager_ID = ''' + data['manager'] + ''',
             info = \'''' + data['description'] + '''\'
@@ -681,7 +681,7 @@ def update_department_info(cursor, data):
     cursor.execute(sql)
     g.db.commit()
 
-    sql = '''update test.employee
+    sql = '''update ProjectExecutionComp.employee
             set Department_ID = \'''' + str(data['department_id']) + '''\',
             Level = 'manager'
             where EmployeeID = ''' + str(data['manager'])
@@ -692,11 +692,11 @@ def update_department_info(cursor, data):
 @throw_dec
 def check_in(cursor, user_id, in_time, late):
     sql = '''select LastAttendenceNo + 1
-        from test.metadata '''
+        from ProjectExecutionComp.metadata '''
     cursor.execute(sql)
     result = cursor.fetchall()
     A = result[0][0]+1
-    sql = '''update test.metadata
+    sql = '''update ProjectExecutionComp.metadata
             set LastAttendenceNo = LastAttendenceNo + 1'''
     cursor.execute(sql)
     g.db.commit()
@@ -705,7 +705,7 @@ def check_in(cursor, user_id, in_time, late):
             in_time.strftime("%H:%M:%S"),
             late > 0,
             late]
-    sql = '''insert into test.attendences(EmployeeID, AttendenceNo, Date,
+    sql = '''insert into ProjectExecutionComp.attendences(EmployeeID, AttendenceNo, Date,
     ArriveTime, Lateornot, TimeMissing)
     VALUES ''' + str(tuple(item))
     cursor.execute(sql)
@@ -714,7 +714,7 @@ def check_in(cursor, user_id, in_time, late):
 
 @throw_dec
 def check_out(cursor, user_id, out_time, early):
-    sql = '''update test.attendences
+    sql = '''update ProjectExecutionComp.attendences
     set LeaveTime = \''''+out_time.strftime("%H:%M:%S")+'''\',
     LeaveEarlyornot = '''+str(early > 0)+''',
     TimeMissing = TimeMissing +'''+str(early)+'''
@@ -725,7 +725,7 @@ def check_out(cursor, user_id, out_time, early):
 
 @throw_dec
 def delete_department(cursor, department_id):
-    sql = '''delete from test.department
+    sql = '''delete from ProjectExecutionComp.department
             where Department_ID = ''' + str(department_id)
     cursor.execute(sql)
     g.db.commit()
@@ -733,19 +733,19 @@ def delete_department(cursor, department_id):
 
 @throw_dec
 def delete_user(cursor, user_id):
-    sql = '''delete from test.attendences
+    sql = '''delete from ProjectExecutionComp.attendences
                 where EmployeeID = ''' + str(user_id)
     cursor.execute(sql)
     g.db.commit()
-    sql = '''delete from test.leaves
+    sql = '''delete from ProjectExecutionComp.leaves
                 where EmployeeID = ''' + str(user_id)
     cursor.execute(sql)
     g.db.commit()
-    sql = '''delete from test.payroll
+    sql = '''delete from ProjectExecutionComp.payroll
                 where EmployeeID = ''' + str(user_id)
     cursor.execute(sql)
     g.db.commit()
-    sql = '''delete from test.employee
+    sql = '''delete from ProjectExecutionComp.employee
             where EmployeeID = ''' + str(user_id)
     cursor.execute(sql)
     g.db.commit()
@@ -756,13 +756,13 @@ def clear_reminder(cursor, user_id):
     # (nkc) 还未验证其正确性
     department, level = get_department_and_level(cursor, user_id)
     if level == 'admin':
-        sql = '''truncate table test.reminders'''
+        sql = '''truncate table ProjectExecutionComp.reminders'''
     elif level == 'manager':
         sql = '''delete
-            from test.reminders
+            from ProjectExecutionComp.reminders
             where EmployeeID in (
                 select EmployeeID
-                from test.employee
+                from ProjectExecutionComp.employee
                 where Department_ID = ''' + str(department) + '''
                 and employee.EmployeeID != ''' + str(user_id)+''')'''
     else:
@@ -776,18 +776,18 @@ def clear_reminder(cursor, user_id):
 def Query_leaveandlate_202001(cursor, topnum=10):
     sql = """with E_leaves(EmployeeID, tot_leaves) as
         (select EmployeeID, sum(Duration)
-        from test.LEAVES
+        from ProjectExecutionComp.LEAVES
         where ApplyStatus = \'accepted\' and
             (LeaveBegin<='2020-01-31' and LeaveEnd>='2020-01-01')
         group by EmployeeID),
         E_lates(EmployeeID, tot_lates) as
         (select EmployeeID, sum(Lateornot|LeaveEarlyornot)
-        from test.ATTENDENCES
+        from ProjectExecutionComp.ATTENDENCES
         where Date >= '2020-01-01' and Date <= '2020-01-31'
         group by EmployeeID)
     select Name, tot_leaves+tot_lates LeaveandLate from
     ((E_lates inner join E_leaves on E_lates.EmployeeID = E_leaves.EmployeeID)
-    inner join test.EMPLOYEE on E_lates.EmployeeID = test.EMPLOYEE.EmployeeID)
+    inner join ProjectExecutionComp.EMPLOYEE on E_lates.EmployeeID = ProjectExecutionComp.EMPLOYEE.EmployeeID)
     order by LeaveandLate desc, Name asc LIMIT """ + str(topnum)
     cursor.execute(sql)
     return __getResult(cursor)
@@ -799,12 +799,12 @@ def Query_leaveandlate_202001(cursor, topnum=10):
 def Query_MaxVerifier_leaves(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
-            from test.Leaves
+            from ProjectExecutionComp.Leaves
             where ApplyStatus = \'accepted\'
             group by ReviewerID)
 
             select * from
-            test.leaves
+            ProjectExecutionComp.leaves
             where EmployeeID in
             (select ReviewerID
             from t
@@ -821,12 +821,12 @@ def Query_MaxVerifier_leaves(cursor):
 def Query_MaxVerifier_lates(cursor):
     sql = """with t(ReviewerID, total) as
             (select ReviewerID, count(*)
-            from test.Leaves
+            from ProjectExecutionComp.Leaves
             where ApplyStatus = \'accepted\'
             group by ReviewerID)
 
             select * from
-            test.ATTENDENCES
+            ProjectExecutionComp.ATTENDENCES
             where EmployeeID in
             (select ReviewerID
             from t
@@ -843,15 +843,16 @@ def Query_MaxVerifier_lates(cursor):
 def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
     sql = """with cur(eid, Deduction, RealSalary) as
         (select EmployeeID, Deduction, RealSalary
-        from test.payroll
+        from ProjectExecutionComp.payroll
         where WorkTime = \'"""+'-'.join([str(year), str(month).zfill(2)])+"""\')
 
     select employee.EmployeeID, Name, Deduction
-    from cur, test.employee
+    from cur, ProjectExecutionComp.employee
     where eid = employee.EmployeeID
     and Department_ID = """+str(D_id)+"""
     and Deduction >= (select avg(RealSalary) from cur)
     order by Deduction desc"""
+
     cursor.execute(sql)
     return __getResult(cursor)
 
@@ -861,12 +862,12 @@ def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
 def Query_MaxRealSalary_2020(cursor):
     sql = """with tmp(Name, WorkTime, RealSalary) as
             (select Name, WorkTime, RealSalary
-            from (select * from test.EMPLOYEE
+            from (select * from ProjectExecutionComp.EMPLOYEE
            where Department_ID in
            (select Department_ID
-           from test.EMPLOYEE
+           from ProjectExecutionComp.EMPLOYEE
            group by Department_ID
-           having count(EmployeeID)>=10)) as t inner join test.PAYROLL
+           having count(EmployeeID)>=10)) as t inner join ProjectExecutionComp.PAYROLL
             on t.EmployeeID = payroll.EmployeeID
             where payroll.WorkTime >= '2020-01-01'
             and payroll.WorkTime <= '2020-12-31')
@@ -876,7 +877,8 @@ def Query_MaxRealSalary_2020(cursor):
            from tmp
            group by WorkTime) as t inner join tmp
            where t.WorkTime = tmp.WorkTime
-           and t.maxsalary = tmp.RealSalary"""
+           and t.maxsalary = tmp.RealSalary
+           order by WorkTime desc"""
     cursor.execute(sql)
     return __getResult(cursor)
 
@@ -884,23 +886,24 @@ def Query_MaxRealSalary_2020(cursor):
 # Query 5
 @throw_dec
 def Query_HugeLatingDuration(cursor):
-    sql = """select Name, t1.Department_ID, LatesDuration
-    from(select Department_ID, avg(LeaveDuration) * 24 as AVG_leaveDuration, month
+    sql = """select Name, t1.month, t1.Department_ID, LatesDuration, CAST(t1.AVG_leaveDuration as SIGNED ) as Avg
+    from(select Department_ID, avg(LeaveDuration) * 24 * 60 as AVG_leaveDuration, month
         from (select employee.EmployeeID, Department_ID,
         sum(Duration) as LeaveDuration, date_format(LeaveBegin, '%Y-%m') as month
-            from test.employee inner join test.leaves
+            from ProjectExecutionComp.employee inner join ProjectExecutionComp.leaves
             on employee.EmployeeID = leaves.EmployeeID
             where Privateornot = 0
             group by employee.EmployeeID, Department_ID, date_format(LeaveBegin, '%Y-%m')) as t
         group by Department_ID, month) as t1 inner join
         (select employee.EmployeeID, Name, Department_ID, LatesDuration, month from
             (select EmployeeID, sum(TimeMissing) as LatesDuration, date_format(Date, '%Y-%m') as month
-            from test.attendences
-            group by EmployeeID, date_format(Date, '%Y-%m')) as t3 inner join test.employee
+            from ProjectExecutionComp.attendences
+            group by EmployeeID, date_format(Date, '%Y-%m')) as t3 inner join ProjectExecutionComp.employee
             on t3.EmployeeID = employee.EmployeeID
         ) as t2
         on t1.Department_ID = t2.Department_ID and t1.month = t2.month
         where t1.AVG_leaveDuration <= t2.LatesDuration
+        order by month desc, Department_ID, Name
     """
     cursor.execute(sql)
     return __getResult(cursor)
@@ -912,21 +915,22 @@ def Query_OverruledManyTimes(cursor):
     sql = """with GGperson(EmployeeID, Latetimes, Leavetimes, month) as
             (select t1.EmployeeID, Latetimes, Leavetimes, t1.month
             from(select EmployeeID, sum(Lateornot) as Latetimes, date_format(Date, '%Y-%m') as month
-            from test.attendences
+            from ProjectExecutionComp.attendences
             group by EmployeeID, month
             having Latetimes>=2) as t1 inner join
             (select EmployeeID, sum(Privateornot) as Leavetimes, date_format(LeaveBegin, '%Y-%m') as month
-            from test.leaves
+            from ProjectExecutionComp.leaves
             where ApplyStatus = \'accepted\'
             group by EmployeeID, month
             having Leavetimes>=2) as t2
             on t1.EmployeeID = t2.EmployeeID and t1.month = t2.month)
 
             select employee.NAME, month, Latetimes, Leavetimes, department.Department, t.Name as Verifier_name
-            from (((GGperson inner join test.employee
-            on GGperson.EmployeeID = employee.EmployeeID) inner join test.department
-            on employee.Department_ID = department.Department_ID) inner join test.employee as t
+            from (((GGperson inner join ProjectExecutionComp.employee
+            on GGperson.EmployeeID = employee.EmployeeID) inner join ProjectExecutionComp.department
+            on employee.Department_ID = department.Department_ID) inner join ProjectExecutionComp.employee as t
             on Manager_ID = t.EmployeeID)
+            order by month desc, Name 
     """
     cursor.execute(sql)
     return __getResult(cursor)
@@ -949,8 +953,8 @@ def init_app(app):
 
 
 if __name__ == "__main__":
-    # db = get_db("test")
-    db = pymysql.connect("localhost", "root", "", "test")
+    # db = get_db("ProjectExecutionComp")
+    db = pymysql.connect("localhost", "root", "", "ProjectExecutionComp")
     cursor = db.cursor()
     # t1 = Query_leaveandlate_202001(cursor)
     # t2 = Query_MaxVerifier_leaves(cursor)

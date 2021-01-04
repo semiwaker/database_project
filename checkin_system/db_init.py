@@ -16,7 +16,7 @@ def get_password():
 
 password = get_password()
 
-name = "test"
+name = "ProjectExecutionComp"
 conn = pymysql.connect(host='localhost', user='root',
                        password=password, charset='utf8mb4')
 cursor = conn.cursor()
@@ -26,9 +26,6 @@ sql = "CREATE DATABASE " + name
 cursor.execute(sql)
 db = pymysql.connect("localhost", "root", password, name)
 cursor = db.cursor()
-'''
-关于违反参照完整性要进行的级联操作之后再细化定义
-'''
 
 # 使用预处理语句创建表
 sql = """create table EMPLOYEE (
@@ -55,7 +52,7 @@ sql = """create table DEPARTMENT (
         Manager_ID int,
         info char(140),
         primary key (Department_ID),
-        foreign key(Manager_ID) references test.EMPLOYEE(EmployeeID)) """
+        foreign key(Manager_ID) references ProjectExecutionComp.EMPLOYEE(EmployeeID)) """
 cursor.execute(sql)
 
 sql = """create table PAYROLL (
@@ -68,8 +65,8 @@ sql = """create table PAYROLL (
         Deduction int not null default 0,
         RealSalary int not null,
         primary key (SalaryNo),
-        foreign key(EmployeeID) references test.EMPLOYEE(EmployeeID),
-        foreign key(VerifierID) references test.EMPLOYEE(EmployeeID)) """
+        foreign key(EmployeeID) references ProjectExecutionComp.EMPLOYEE(EmployeeID),
+        foreign key(VerifierID) references ProjectExecutionComp.EMPLOYEE(EmployeeID)) """
 cursor.execute(sql)
 
 sql = """create table LEAVES (
@@ -85,8 +82,8 @@ sql = """create table LEAVES (
         Duration int not null,
         check(ApplyStatus in ('pending', 'accepted', 'rejected')),
         primary key (LeaveNo),
-        foreign key(ReviewerID) references test.EMPLOYEE(EmployeeID),
-        foreign key(EmployeeID) references test.EMPLOYEE(EmployeeID)) """
+        foreign key(ReviewerID) references ProjectExecutionComp.EMPLOYEE(EmployeeID),
+        foreign key(EmployeeID) references ProjectExecutionComp.EMPLOYEE(EmployeeID)) """
 cursor.execute(sql)
 
 sql = """create table ATTENDENCES (
@@ -106,7 +103,7 @@ sql = """create table REMINDERS (
         EmployeeID int,
         Total int not null default 0,
         primary key (EmployeeID),
-        foreign key(EmployeeID) references test.EMPLOYEE(EmployeeID))"""
+        foreign key(EmployeeID) references ProjectExecutionComp.EMPLOYEE(EmployeeID))"""
 cursor.execute(sql)
 
 sql = """create table METADATA (
@@ -137,7 +134,7 @@ last_name = ['Adams', 'Anderson', 'Arnold',
 n = len(first_name)*len(last_name)
 # n = 10
 D = 5
-D_name = ['A01', 'A02', 'B01', 'B02', 'S']
+D_name = ['A', 'B', 'C', 'D', 'S']
 Employee = [[
     i*len(last_name)+j+1,  # EmloyeeID
     first_name[i]+' '+last_name[j],  # Name
@@ -206,15 +203,33 @@ Ded = np.zeros((n, 13))
 leave_values = []
 attend_values = []
 
+def generate_late_str(is_late_man):
+    if is_late_man:
+        return "16:58:00", 478
+    t = random.randint(1, 180)
+    return str(9+t//60).zfill(2)+":"+str(t%60).zfill(2)+":00", t
+
+first_man = [0 for i in range(D+1)]
 for eid in range(1, n+1):
-    print(eid)
     if Employee[eid-1][10] == 'employee':
-        late_P = 0.1
-        leave_P = 0.1
+        if first_man[Employee[eid-1][11]] == 0:  # 每个部门有一个专门迟到哥（为了查询3和查询5）
+            first_man[Employee[eid - 1][11]] = 1
+            late_P = 1
+            leave_P = 0
+        elif first_man[Employee[eid-1][11]] == 1:  # 每个部门还有一个专门迟到哥（为了查询6）
+            first_man[Employee[eid - 1][11]] = 2
+            late_P = 1
+            leave_P = 0.9
+        else:
+            late_P = 0.1
+            leave_P = 0.1
         verifier = M[Employee[eid-1][11]-1]
     elif Employee[eid-1][10] == 'manager':
+        if Employee[eid-1][11] == 5:  # S部门的经理每天请假
+            leave_P = 1
+        else:
+            leave_P = 0.02
         late_P = 0.02
-        leave_P = 0.02
         verifier = Admin
     else:
         late_P = 0
@@ -227,11 +242,14 @@ for eid in range(1, n+1):
     while d <= end:
         day = 0
         if random.random() < leave_P:
-            if random.random() < 0.5:
+            if random.random() < 0.8 and not leave_P == 1:  # 对请假型经理特殊处理
                 private = True
             else:
                 private = False
-            day = random.randint(1, 5)
+            if leave_P == 1:  # 对请假型经理特殊处理
+                day = 5
+            else:
+                day = random.randint(1, 5)
             if (not private) or random.random() < 0.6:
                 a_s = 'accepted'
             else:
@@ -255,7 +273,8 @@ for eid in range(1, n+1):
             missing = 0
             if random.random() < late_P:
                 lateornot = True
-                missing += 1
+                arrive_time, tt = generate_late_str(late_P==1)
+                missing += tt
                 Ded[eid-1][d.month] += 100
             else:
                 lateornot = False
@@ -267,7 +286,7 @@ for eid in range(1, n+1):
                 leaveearlyornot = False
             A += 1
             item = [eid, A, d.strftime("%Y-%m-%d"),
-                    '09:01:00' if lateornot else '08:59:00',
+                    arrive_time if lateornot else '08:59:00',
                     '16:59:00' if leaveearlyornot else '17:01:00',
                     lateornot, leaveearlyornot, missing]
             attend_values.append(str(tuple(item)))
@@ -275,7 +294,7 @@ for eid in range(1, n+1):
         d += delta
         d += delta
 
-sql = '''insert into test.leaves(EmployeeID, LeaveNo, LeaveBegin,
+sql = '''insert into ProjectExecutionComp.leaves(EmployeeID, LeaveNo, LeaveBegin,
 LeaveEnd, LeaveReason, Privateornot, ApplyDay,
 ReviewerID, ApplyStatus, Duration) VALUES ''' + ",".join(leave_values)
 try:
@@ -285,7 +304,7 @@ except:
     embed()
 
 try:
-    sql = '''insert into test.attendences(EmployeeID, AttendenceNo,
+    sql = '''insert into ProjectExecutionComp.attendences(EmployeeID, AttendenceNo,
     Date, ArriveTime, LeaveTime, Lateornot, LeaveEarlyornot, TimeMissing)
     VALUES ''' + ",".join(attend_values)
     cursor.execute(sql)
@@ -316,13 +335,13 @@ for eid in range(1, n+1):
         item = [S, eid, basic, paytime, verifier, worktime, deduction, real]
         payroll_values.append(str(tuple(item)))
 
-sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary,
+sql = '''insert into ProjectExecutionComp.payroll(SalaryNo, EmployeeID, BasicSalary,
     PayTime, VerifierID, WorkTime, Deduction, RealSalary)
     VALUES ''' + ",".join(payroll_values)
 cursor.execute(sql)
 db.commit()
 
-sql = """insert into test.METADATA
+sql = """insert into ProjectExecutionComp.METADATA
         (LastEmployeeNo,LastDepartmentNo,LastSalaryNo,LastLeaveNo,LastAttendenceNo)
         values """+str((n, D, S, L, A))
 cursor.execute(sql)
@@ -331,25 +350,25 @@ db.commit()
 
 # 为了防止有以前的提醒，最后再加触发器
 sql = """create trigger LeaveAutoDetect AFTER UPDATE
-ON test.leaves FOR EACH ROW
+ON ProjectExecutionComp.leaves FOR EACH ROW
 BEGIN
     if (NEW.ApplyStatus = 'accepted' and NEW.Privateornot = TRUE)
         then
-        insert into test.badevents(EmployeeID, Date)
+        insert into ProjectExecutionComp.badevents(EmployeeID, Date)
         VALUES (NEW.EmployeeID, NEW.LeaveEnd);
-        select count(*) from test.badevents
+        select count(*) from ProjectExecutionComp.badevents
             where EmployeeID = NEW.EmployeeID
             and DATEDIFF(Date, NEW.LeaveBegin)>=-6 into @a;
         if @a > 3
             then
-            if (select count(*) from test.reminders
+            if (select count(*) from ProjectExecutionComp.reminders
                 where EmployeeID = NEW.EmployeeID) > 0
                 then
-                UPDATE test.reminders
+                UPDATE ProjectExecutionComp.reminders
                 set Total = @a
                 where EmployeeID = NEW.EmployeeID;
                 else
-                insert into test.reminders(EmployeeID, Total)
+                insert into ProjectExecutionComp.reminders(EmployeeID, Total)
                 VALUES (NEW.EmployeeID, @a);
             end if;
         end if;
@@ -358,25 +377,25 @@ end;"""
 cursor.execute(sql)
 
 sql = """create trigger LateAutoDetect AFTER INSERT
-ON test.attendences FOR EACH ROW
+ON ProjectExecutionComp.attendences FOR EACH ROW
 BEGIN
     if (NEW.Lateornot = TRUE)
         then
-        insert into test.badevents(EmployeeID, Date)
+        insert into ProjectExecutionComp.badevents(EmployeeID, Date)
         VALUES (NEW.EmployeeID, NEW.Date);
-        select count(*) from test.badevents
+        select count(*) from ProjectExecutionComp.badevents
             where EmployeeID = NEW.EmployeeID
             and DATEDIFF(Date, NEW.Date)>=-6 into @a;
         if @a > 3
             then
-            if (select count(*) from test.reminders
+            if (select count(*) from ProjectExecutionComp.reminders
                 where EmployeeID = NEW.EmployeeID) > 0
                 then
-                UPDATE test.reminders
+                UPDATE ProjectExecutionComp.reminders
                 set Total = @a
                 where EmployeeID = NEW.EmployeeID;
                 else
-                insert into test.reminders(EmployeeID, Total)
+                insert into ProjectExecutionComp.reminders(EmployeeID, Total)
                 VALUES (NEW.EmployeeID, @a);
             end if;
         end if;
