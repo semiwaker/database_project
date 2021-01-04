@@ -356,8 +356,8 @@ for eid in range(1, n+1):
     else:
         basic = 8000
         verifier = Admin
-    worktime = 2021 - int(Employee[eid - 1][4][0:4])
     for month in range(1, 13):
+        worktime = f"2021-{month}"
         paytime = datetime.datetime(
             2021 if month == 12 else 2020,
             1 if month == 12 else month+1,

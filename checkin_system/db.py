@@ -19,7 +19,7 @@ def throw_dec(func):
     return wrapper
 
 
-def get_password():
+def get_dbpassword():
     if not os.path.exists("./db_password.txt"):
         return ""
     with open("./db_password.txt", "r") as file:
@@ -27,7 +27,7 @@ def get_password():
     return db_password
 
 
-db_password = get_password()
+db_password = get_dbpassword()
 
 
 def get_db(name="test"):
@@ -252,7 +252,7 @@ def get_salary_list(cursor, user_id):
         cursor.execute(sql)
         result = cursor.fetchall()[0]
         deduction_times, attendence_times = result[0], result[1]
-        sql = '''select ifnull(sum(Duration), 0) 
+        sql = '''select ifnull(sum(Duration), 0)
         from test.leaves
         where ApplyStatus = 'accepted'
         and YEAR(LeaveBegin) = '''+today.strftime('%Y')+'''
@@ -265,7 +265,7 @@ def get_salary_list(cursor, user_id):
                       deduction, basicSalary-deduction))
     sql = '''select LastSalaryNo from test.metadata'''
     cursor.execute(sql)
-    # 最后一个salary编号, 因为不能缺少是否分发，必须等操作完了再修改最后的salary编号
+    # 最后一个salary编号, 因为不能确定是否分发，必须等操作完了再修改最后的salary编号
     last_salary_no = cursor.fetchall()[0][0]
     return (ret_L, last_salary_no)
     # [
@@ -596,8 +596,8 @@ def add_new_salary(cursor, data):
         item = (D['salaryNo'], D['employee_id'], D['basicSalary'],
                 D['payTime'], D['verifier'],
                 D['workTime'], D['deduction'], D['realSalary'])
-        sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary, 
-                PayTime, VerifierID, WorkTime, Deduction, RealSalary) 
+        sql = '''insert into test.payroll(SalaryNo, EmployeeID, BasicSalary,
+                PayTime, VerifierID, WorkTime, Deduction, RealSalary)
         VALUES '''+str(tuple(item))
         cursor.execute(sql)
         g.db.commit()
@@ -829,7 +829,7 @@ def Query_HugeDeduction(cursor, year=2020, month=12, D_id=1):
         (select EmployeeID, Deduction, RealSalary
         from test.payroll
         where WorkTime = \'"""+'-'.join([str(year), str(month).zfill(2)])+"""\')
-    
+
     select employee.EmployeeID, Name, Deduction
     from cur, test.employee
     where eid = employee.EmployeeID
@@ -912,6 +912,8 @@ def Query_OverruledManyTimes(cursor):
             on employee.Department_ID = department.Department_ID) inner join test.employee as t
             on Manager_ID = t.EmployeeID)
     """
+    cursor.execute(sql)
+    return __getResult(cursor)
 
 
 @throw_dec

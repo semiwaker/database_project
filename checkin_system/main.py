@@ -259,6 +259,7 @@ def department(department_id):
     g.department_manager_id = department_data["manager_id"]
     g.department_description = department_data["description"]
     msg = None
+    succeed = None
     if request.method == "POST":
         if not db.check_department_updatable(cursor, g.user_id, department_id):
             msg = Markup("权限不足，无法修改部门信息！")
@@ -272,7 +273,8 @@ def department(department_id):
             }
             db.update_department_info(cursor, data)
             msg = Markup("修改成功！")
-    return render_template("department.html.j2", msg=msg)
+            succeed = True
+    return render_template("department.html.j2", msg=msg, succeed=succeed)
 
 
 @bp.route('/add_department')
