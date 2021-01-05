@@ -1,0 +1,44 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}工资单记录{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>编号</th>
+            <th>员工姓名</th>
+            <th>基础工资</th>
+            <th>迟到早退扣除</th>
+            <th>实际工资</th>
+            <th>工作月份</th>
+            <th>发放时间</th>
+            <th>发放人</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for salary in g.salary_list %}
+        <tr>
+            <td>{{ salary.id }}</td>
+            <td>{{ salary.name }}</td>
+            <td>{{ salary.basic }}</td>
+            <td>{{ salary.deduction }}</td>
+            <td>{{ salary.realSalary }}</td>
+            <td>{{ salary.workTime }}</td>
+            <td>{{ salary.payTime }}</td>
+            <td>{{ salary.verifier }}</td>
+            <td>
+                <form method="post" action="{{ url_for('main.remove_salary', salary_no=salary.id) }}">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

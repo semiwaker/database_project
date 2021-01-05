@@ -1,0 +1,52 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}考勤记录{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>编号</th>
+            <th>员工姓名</th>
+            <th>日期</th>
+            <th>到岗时间</th>
+            <th>离岗时间</th>
+            <th>状态</th>
+            <th>缺失工作时间</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for attendence in g.attendence_list %}
+        <tr>
+            <td>{{ attendence.id }}</td>
+            <td>{{ attendence.name }}</td>
+            <td>{{ attendence.date }}</td>
+            <td>{{ attendence.arrive }}</td>
+            <td>{{ attendence.leaveTime }}</td>
+            <td>
+                {% if attendence.late %}
+                    <strong> 迟到 </strong>
+                {% endif %}
+                {% if attendence.early %}
+                    <strong> 早退 </strong>
+                {% endif %}
+                {% if not attendence.early and not attendence.late %}
+                    正常
+                {% endif %}
+            </td>
+            <td>{{ attendence.miss }}</td>
+            <td>
+                <form method="post" action="{{ url_for('main.remove_attendence', attendence_no=attendence.id) }}">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

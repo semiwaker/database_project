@@ -30,7 +30,7 @@ def register():
             "level": "employee",
             "entry_date": datetime.date.today().strftime("%Y-%m-%d")
         }
-        db.add_new_employee(c，cursor, data)
+        db.add_new_employee(cursor, data)
         if not getattr(g, "error", None):
             session.clear()
             session["user_id"], _ = db.get_id_and_password(

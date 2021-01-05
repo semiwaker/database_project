@@ -116,6 +116,60 @@ def reject_leave(leave_no):
     return leave_review()
 
 
+@bp.route('/leaves')
+@login_required
+def leaves():
+    cursor = db.get_db().cursor()
+    g.leave_list = db.get_reviewed_leaves(cursor, g.user_id)
+    return render_template("leaves.html.j2")
+
+
+@bp.route('/leaves/remove/<leave_no>', methods=['POST'])
+@login_required
+def remove_leave(leave_no):
+    cursor = db.get_db().cursor()
+    if not db.check_reviewable(cursor, g.user_id, leave_no):
+        return redirect(url_for("main.denied"))
+    db.remove_leave(cursor, leave_no)
+    return leaves()
+
+
+@bp.route('/attendences')
+@login_required
+def attendences():
+    cursor = db.get_db().cursor()
+    g.attendence_list = db.get_attendences(cursor, g.user_id)
+    return render_template("attendences.html.j2")
+
+
+@bp.route('/attendences/remove/<attendence_no>', methods=['POST'])
+@login_required
+def remove_attendence(attendence_no):
+    cursor = db.get_db().cursor()
+    if not db.check_remove_attendence(cursor, g.user_id, attendence_no):
+        return redirect(url_for("main.denied"))
+    db.remove_attendence(cursor, attendence_no)
+    return attendences()
+
+
+@bp.route('/salaries')
+@login_required
+def salaries():
+    cursor = db.get_db().cursor()
+    g.salary_list = db.get_salaries(cursor, g.user_id)
+    return render_template("salaries.html.j2")
+
+
+@bp.route('/salaries/remove/<salary_no>', methods=['POST'])
+@login_required
+def remove_salary(salary_no):
+    cursor = db.get_db().cursor()
+    if not db.check_remove_salary(cursor, g.user_id, salary_no):
+        return redirect(url_for("main.denied"))
+    db.remove_salary(cursor, salary_no)
+    return salaries()
+
+
 @bp.route('/salary_dispense', methods=['GET', 'POST'])
 @login_required
 def salary_dispense():

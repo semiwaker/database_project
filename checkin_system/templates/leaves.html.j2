@@ -1,0 +1,44 @@
+{% extends 'base.html.j2' %}
+
+{% block header %}
+<h1>{% block title %}请假条记录{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>编号</th>
+            <th>员工姓名</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>申请日期</th>
+            <th>原因</th>
+            <th>审核人</th>
+            <th>审核状态</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for leave in g.leave_list %}
+        <tr>
+            <td>{{ leave.id }}</td>
+            <td>{{ leave.name }}</td>
+            <td>{{ leave.begin }}</td>
+            <td>{{ leave.end }}</td>
+            <td>{{ leave.apply }}</td>
+            <td>{{ leave.reason }}</td>
+            <td>{{ leave.reviewer }}</td>
+            <td>{{ leave.status }}</td>
+            <td>
+                <form method="post" action="{{ url_for('main.remove_leave', leave_no=leave.id) }}">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

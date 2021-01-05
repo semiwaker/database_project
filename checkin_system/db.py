@@ -210,15 +210,80 @@ def get_leave_list(cursor, user_id):
         cursor.execute(sql)
         return __getResult(cursor)
 
-    # return [
-    #     {
-    #         "leave_no": None,
-    #         "leave_begin": None,
-    #         "leave_end": None,
-    #         "leave_reason": None,
-    #         "apply_day": None
-    #     }
-    # ]
+
+@throw_dec
+def get_reviewed_leaves(cursor, user_id):
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'employee':
+        return []
+    elif level == 'manager':
+        sql = """select LeaveNo as id, E1.Name as name, LeaveBegin as begin, LeaveEnd as end,
+            LeaveReason as reason, ApplyDay as apply, ApplyStatus as status, E2.Name as reviewer
+            from ProjectExecutionComp.leaves, ProjectExecutionComp.employee as E1, ProjectExecutionComp.employee as E2
+            where leaves.EmployeeID = E1.EmployeeID
+                and ApplyStatus != \'pending\'
+                and leaves.ReviewerID = E2.EmployeeID
+                and E1.Department_ID = """+str(department)+"""
+                and not leaves.EmployeeID = """+str(user_id)
+        cursor.execute(sql)
+        return __getResult(cursor)
+    elif level == 'admin':
+        sql = """select LeaveNo as id, E1.Name as name, LeaveBegin as begin, LeaveEnd as end,
+            LeaveReason as reason, ApplyDay as apply, ApplyStatus as status, E2.Name as reviewer
+            from ProjectExecutionComp.leaves, ProjectExecutionComp.employee as E1, ProjectExecutionComp.employee as E2
+            where leaves.EmployeeID = E1.EmployeeID
+                and ApplyStatus != \'pending\'
+                and leaves.ReviewerID = E2.EmployeeID"""
+        cursor.execute(sql)
+        return __getResult(cursor)
+
+
+@throw_dec
+def get_attendences(cursor, user_id):
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'employee':
+        return []
+    elif level == 'manager':
+        sql = """select AttendenceNo as id, Name as name, Date as date, ArriveTime as arrive,
+            LeaveTime as leaveTime, Lateornot as late, LeaveEarlyornot as early, TimeMissing as miss
+            from ProjectExecutionComp.attendences, ProjectExecutionComp.employee
+            where attendences.EmployeeID = employee.EmployeeID
+                and Department_ID = """+str(department)+"""
+                and not attendences.EmployeeID = """+str(user_id)
+        cursor.execute(sql)
+        return __getResult(cursor)
+    elif level == 'admin':
+        sql = """select AttendenceNo as id, Name as name, Date as date, ArriveTime as arrive,
+            LeaveTime as leaveTime, Lateornot as late, LeaveEarlyornot as early, TimeMissing as miss
+            from ProjectExecutionComp.attendences, ProjectExecutionComp.employee
+            where attendences.EmployeeID = employee.EmployeeID"""
+        cursor.execute(sql)
+        return __getResult(cursor)
+
+
+@throw_dec
+def get_salaries(cursor, user_id):
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'employee':
+        return []
+    elif level == 'manager':
+        sql = """select SalaryNo as id, E1.Name as name, BasicSalary as basic, Deduction as deduction,
+            RealSalary as realSalary, WorkTime as workTime, PayTime as payTime, E2.Name as verifier
+            from ProjectExecutionComp.payroll, ProjectExecutionComp.employee as E1, ProjectExecutionComp.employee as E2
+            where payroll.EmployeeID = E1.EmployeeID
+                and payroll.VerifierID = E2.EmployeeID
+                and E1.Department_ID = """+str(department)+"""
+                and not payroll.EmployeeID = """+str(user_id)
+        cursor.execute(sql)
+        return __getResult(cursor)
+    elif level == 'admin':
+        sql = """select SalaryNo as id, E1.Name as name, BasicSalary as basic, Deduction as deduction,
+            RealSalary as realSalary, WorkTime as workTime, PayTime as payTime, E2.Name as verifier
+            from ProjectExecutionComp.payroll, ProjectExecutionComp.employee as E1, ProjectExecutionComp.employee as E2
+            where payroll.EmployeeID = E1.EmployeeID
+                and payroll.VerifierID = E2.EmployeeID"""
+        cursor.execute(sql)
+        return __getResult(cursor)
 
 
 @throw_dec
@@ -440,6 +505,44 @@ def check_reviewable(cursor, user_id, leave_no):
 
 
 @throw_dec
+def check_remove_attendence(cursor, user_id, attendence_no):
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'admin':
+        return True
+    elif level == 'employee':
+        return False
+    sql = '''select attendences.EmployeeID, Department_ID
+    from ProjectExecutionComp.attendences, ProjectExecutionComp.employee
+    where AttendenceNo = '''+str(attendence_no)+'''
+        and attendences.EmployeeID = employee.EmployeeID'''
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    employee_id, department_id = result[0][0], result[0][1]
+    if user_id == employee_id or department != department_id:
+        return False
+    return True
+
+
+@throw_dec
+def check_remove_salary(cursor, user_id, salary_no):
+    department, level = get_department_and_level(cursor, user_id)
+    if level == 'admin':
+        return True
+    elif level == 'employee':
+        return False
+    sql = '''select payroll.EmployeeID, Department_ID
+    from ProjectExecutionComp.payroll, ProjectExecutionComp.employee
+    where SalaryNo = '''+str(salary_no)+'''
+        and payroll.EmployeeID = employee.EmployeeID'''
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    employee_id, department_id = result[0][0], result[0][1]
+    if user_id == employee_id or department != department_id:
+        return False
+    return True
+
+
+@throw_dec
 def check_department_updatable(cursor, user_id, department_id):
     department, level = get_department_and_level(cursor, user_id)
     if level == 'admin' or (level == 'manager' and department == int(department_id)):
@@ -461,6 +564,30 @@ def reject_leave(cursor, leave_no):
     sql = '''update ProjectExecutionComp.leaves
         set ApplyStatus = 'rejected'
         where LeaveNo = ''' + str(leave_no)
+    cursor.execute(sql)
+    g.db.commit()
+
+
+@throw_dec
+def remove_leave(cursor, leave_no):
+    sql = '''delete from ProjectExecutionComp.leaves
+        where LeaveNo = ''' + str(leave_no)
+    cursor.execute(sql)
+    g.db.commit()
+
+
+@throw_dec
+def remove_attendence(cursor, attendence_no):
+    sql = '''delete from ProjectExecutionComp.attendences
+        where AttendenceNo = ''' + str(attendence_no)
+    cursor.execute(sql)
+    g.db.commit()
+
+
+@throw_dec
+def remove_salary(cursor, salary_no):
+    sql = '''delete from ProjectExecutionComp.payroll
+        where SalaryNo = ''' + str(salary_no)
     cursor.execute(sql)
     g.db.commit()
 

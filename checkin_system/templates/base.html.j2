@@ -74,7 +74,10 @@
                         <span class="badge">{{ g.leave_num }}</span>
                         {% endif %}
                     </a>
+                    <a href="{{ url_for('main.leaves') }}" class="list-group-item">请假条记录</a>
+                    <a href="{{ url_for('main.attendences') }}" class="list-group-item">考勤记录</a>
                     <a href="{{ url_for('main.salary_dispense') }}" class="list-group-item">工资发放</a>
+                    <a href="{{ url_for('main.salaries') }}" class="list-group-item">工资单记录</a>
                     <a href="{{ url_for('main.employee_modify', user_id=g.user_id)}}" class="list-group-item">修改员工信息</a>
                     {% endif %}
                     {% if g.user_level == 'admin' %}
