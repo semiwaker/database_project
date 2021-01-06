@@ -294,6 +294,18 @@ for eid in range(1, n+1):
         d += delta
         d += delta
 
+L += 1
+item = [1, L, '2021-01-03', '2021-01-03', '写大作业', True, '2021-01-02', M[Employee[0][11]-1], 'pending', 1]
+leave_values.append(str(tuple(item)))
+L += 1
+item = [1, L, '2021-01-04', '2021-01-04', '写大作业', True, '2021-01-03', M[Employee[0][11]-1], 'pending', 1]
+leave_values.append(str(tuple(item)))
+L += 1
+item = [1, L, '2021-01-05', '2021-01-05', '写大作业', True, '2021-01-04', M[Employee[0][11]-1], 'pending', 1]
+leave_values.append(str(tuple(item)))
+L += 1
+item = [1, L, '2021-01-06', '2021-01-06', '写大作业', True, '2021-01-05', M[Employee[0][11]-1], 'pending', 1]
+leave_values.append(str(tuple(item)))
 sql = '''insert into ProjectExecutionComp.leaves(EmployeeID, LeaveNo, LeaveBegin,
 LeaveEnd, LeaveReason, Privateornot, ApplyDay,
 ReviewerID, ApplyStatus, Duration) VALUES ''' + ",".join(leave_values)
