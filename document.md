@@ -5,7 +5,7 @@
 + 语言：python 3
 + 数据库：MySQL, MySQL python接口
 + 后台程序：Flask
-+ 前端框架：React用于处理内容, Bootstrap用于CSS。
++ 前端框架：React用于处理活动页面, Bootstrap用于CSS。
 
 ## 运行说明
 
@@ -73,7 +73,7 @@ python -m flask run
 
 `\main\home`为主页，用于展示员工信息。普通员工仅能展示自己，经理和管理员可以选择自己或任意下属的信息进行展示。
 
-展示界面通过XML获取信息，对应的url为`\main\employee_info_<user_id>.xml`，其中user_id为对应的用户编号，当user_id='all'时，为将所有用户信息集合在一起的xml（没有对应的展示页面）。
+展示界面通过Ajax查询相应XML获取信息，对应的url为`\main\employee_info_<user_id>.xml`，其中user_id为对应的用户编号，当user_id='all'时，为将所有用户信息集合在一起的xml（没有对应的展示页面）。
 
 XML的展示使用javascript进行处理，`static\employee_display.js`负责将XML转换为对应的网页元素，以及负责处理主页的展示员工选择功能。
 
@@ -83,10 +83,14 @@ XML的展示使用javascript进行处理，`static\employee_display.js`负责将
 
 工作时间以9点到17点记，9点后到岗为迟到，17点前离岗为早退，在数据库中没有记录为缺勤。
 
+`main\attendences`为考勤页面，对经理或管理员可见，用于查看或删除下属员工的考勤记录，对应函数为`main.attendences`。
+
 ### 请假与审批
 
 `\main\leave`为请假页面，入口在右侧导航栏。对应函数为`main.leave`。
 `\main\leave_review`为请假审批页面，经理以及管理员在右侧导航栏可见，当下属员工有未审批的请假条时，会以数字标签的形式提醒经理或管理员审批。请假条以表格形式展示，右侧有接受和拒绝按钮。对应函数为`main.leave_review`。
+
+`\main\leaves`为请假条查看页面，经理及管理员可见，用于查看或删除下属员工的已审核的请假条。对应函数为`main.leaves`。
 
 ### 修改自身信息
 
@@ -102,11 +106,13 @@ XML的展示使用javascript进行处理，`static\employee_display.js`负责将
 
 管理员的右侧导航栏中，会依次显示所有部门的名称，作为修改部门信息入口。最后的"+"表示新增部门，会赋予新增部门初始信息后跳转到对应的部门信息展示或修改页面。
 
-### 工资发放
+### 工资
 
-`main\salary_dispense`为工资发放页面，对经理或管理员可见，列出了所有下属员工的基本工资和迟到早退扣除，以及计算后的真实工资。可以在最下方选择对应的工作日期后，同时发放所有工资。对应函数为`main.salary_dispense`
+`main\salary_dispense`为工资发放页面，对经理或管理员可见，列出了所有下属员工的基本工资和迟到早退扣除，以及计算后的真实工资。可以修改基本工资后者迟到早退扣除，在最下方选择对应的工作日期后，同时发放所有工资。对应函数为`main.salary_dispense`
 
 真实工资的动态计算由`static\salary_dispense.js`中的javascript完成。
+
+`main\salaries`为工资单查看页面，对经理或管理员可见，用于查看或删除所有下属员工的已经发放的工资单。对应函数为`main.salaries`。
 
 ### SQL查询
 
